@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>栄養情報ビューア</title>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ 栄養バランスチェッカー</h1>
+            <p class="subtitle">食事の栄養バランスを可視化</p>
+        </div>
+
+        <div class="menu-section">
+            <div id="categories-container" class="categories-container">
+                <!-- カテゴリーと料理がここに動的に生成される -->
+            </div>
+        </div>
+
+        <div id="result-container" class="result-container">
+            <div id="result" class="result">
+                <div class="total-header">
+                    <h2>📊 栄養情報（合計）</h2>
+                    <div class="total-calories">
+                        <div class="calories-number" id="total-calories">0</div>
+                        <div class="calories-unit">kcal</div>
+                    </div>
+                </div>
+
+                <div class="nutrition-grid">
+                    <div class="nutrition-card protein-card">
+                        <div class="nutrition-icon">🥩</div>
+                        <div class="nutrition-label">タンパク質</div>
+                        <div class="nutrition-value" id="total-protein">0</div>
+                        <div class="nutrition-unit">g</div>
+                    </div>
+                    <div class="nutrition-card fat-card">
+                        <div class="nutrition-icon">🧈</div>
+                        <div class="nutrition-label">脂質</div>
+                        <div class="nutrition-value" id="total-fat">0</div>
+                        <div class="nutrition-unit">g</div>
+                    </div>
+                    <div class="nutrition-card carbs-card">
+                        <div class="nutrition-icon">🌾</div>
+                        <div class="nutrition-label">炭水化物</div>
+                        <div class="nutrition-value" id="total-carbs">0</div>
+                        <div class="nutrition-unit">g</div>
+                    </div>
+                </div>
+
+                <div class="pfc-section">
+                    <h3>⚖️ PFCバランス</h3>
+                    
+                    <div class="pfc-chart">
+                        <div class="pfc-bar-container">
+                            <div class="pfc-bar" id="pfc-bar">
+                                <div class="pfc-segment protein-segment" id="protein-segment" style="width: 0%">
+                                    <span class="pfc-label" id="protein-percent"></span>
+                                </div>
+                                <div class="pfc-segment fat-segment" id="fat-segment" style="width: 0%">
+                                    <span class="pfc-label" id="fat-percent"></span>
+                                </div>
+                                <div class="pfc-segment carbs-segment" id="carbs-segment" style="width: 0%">
+                                    <span class="pfc-label" id="carbs-percent"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pfc-details">
+                            <div class="pfc-detail-item">
+                                <div class="pfc-detail-left">
+                                    <div class="pfc-detail-color protein"></div>
+                                    <span class="pfc-detail-label">タンパク質</span>
+                                </div>
+                                <div class="pfc-detail-right">
+                                    <span class="pfc-detail-value" id="protein-kcal">0</span>
+                                    <span class="pfc-detail-kcal">kcal</span>
+                                    <span class="pfc-detail-percent" id="protein-percent-detail">0%</span>
+                                </div>
+                            </div>
+                            <div class="pfc-detail-item">
+                                <div class="pfc-detail-left">
+                                    <div class="pfc-detail-color fat"></div>
+                                    <span class="pfc-detail-label">脂質</span>
+                                </div>
+                                <div class="pfc-detail-right">
+                                    <span class="pfc-detail-value" id="fat-kcal">0</span>
+                                    <span class="pfc-detail-kcal">kcal</span>
+                                    <span class="pfc-detail-percent" id="fat-percent-detail">0%</span>
+                                </div>
+                            </div>
+                            <div class="pfc-detail-item">
+                                <div class="pfc-detail-left">
+                                    <div class="pfc-detail-color carbs"></div>
+                                    <span class="pfc-detail-label">炭水化物</span>
+                                </div>
+                                <div class="pfc-detail-right">
+                                    <span class="pfc-detail-value" id="carbs-kcal">0</span>
+                                    <span class="pfc-detail-kcal">kcal</span>
+                                    <span class="pfc-detail-percent" id="carbs-percent-detail">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
