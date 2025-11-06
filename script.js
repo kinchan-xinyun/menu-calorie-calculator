@@ -1,101 +1,6 @@
-// ==================== Google Sheets から読み込み ====================
-
-async function loadFromGoogleSheets() {
-    try {
-        console.log('Loading data from Google Sheets...');
-        console.log('Using URL:', GOOGLE_APPS_SCRIPT_URL);
-        
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-            nutritionData = data;
-            console.log('Data loaded from Google Sheets:', data.length, 'items');
-        } else {
-            console.warn('No data from Google Sheets, using CSV fallback');
-            await loadCSV();
-        }
-    } catch (error) {
-        console.warn('Google Sheetsからの読み込みに失敗。CSVから読み込みます:', error);
-        await loadCSV();
-    }
-}
-
-async function loadCSV() {
-    try {
-        const response = await fetch('menu.csv');
-        const csvText = await response.text();
-        parseCSV(csvText);
-    } catch (error) {
-        console.error('CSVの読み込みに失敗しました:', error);
-    }
-}
-
-function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"') {
-            inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-            result.push(current);
-            current = '';
-        } else {
-            current += char;
-        }
-    }
-    
-    result.push(current);
-    return result;
-}
-
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        
-        const values = parseCSVLine(line);
-        
-        if (values.length >= 5) {
-            const protein = values[2] ? parseFloat(values[2]) : 0;
-            const fat = values[3] ? parseFloat(values[3]) : 0;
-            const carbs = values[4] ? parseFloat(values[4]) : 0;
-            const calories = values[5] ? parseFloat(values[5]) : 0;
-            const imagePath = values[6] ? values[6].trim() : '';
-            
-            nutritionData.push({
-                category: values[0].trim(),
-                dish: values[1].trim(),
-                protein: protein,
-                fat: fat,
-                carbs: carbs,
-                calories: calories,
-                image: imagePath
-            });
-        }
-    }
-}
-
-function sanitizeFilename(filename) {
-    return filename
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '_')
-        .replace(/-+/g, '_');
-}// グローバル変数
+// グローバル変数
 let nutritionData = [];
-let selectedDishes = {};
+let selectedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 let currentCategory = null;
 let customDishes = {};
 
@@ -179,6 +84,32 @@ function parseCSV(csvText) {
     }
 }
 
+// ==================== Google Sheets から読み込み ====================
+
+async function loadFromGoogleSheets() {
+    try {
+        console.log('Loading data from Google Sheets...');
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+            nutritionData = data;
+            console.log('Data loaded from Google Sheets:', data.length, 'items');
+        } else {
+            console.warn('No data from Google Sheets, using CSV fallback');
+            await loadCSV();
+        }
+    } catch (error) {
+        console.warn('Google Sheetsからの読み込みに失敗。CSVから読み込みます:', error);
+        await loadCSV();
+    }
+}
+
 // ==================== 初期化 ====================
 
 function init() {
@@ -192,7 +123,7 @@ function init() {
         if (dishes.length === 0) return;
         
         if (!selectedDishes[category]) {
-            selectedDishes[category] = null;
+            selectedDishes[category] = [];
         }
         
         if (!customDishes[category]) {
@@ -210,31 +141,28 @@ function init() {
         const dishesRow = document.createElement('div');
         dishesRow.className = 'dishes-row';
         
-        // 「なし」ボタン
-        const noneButton = document.createElement('button');
-        noneButton.className = 'dish-button none-button';
-        noneButton.textContent = 'なし';
+        // 「クリア」ボタン
+        const clearButton = document.createElement('button');
+        clearButton.className = 'dish-button clear-button';
+        clearButton.textContent = 'クリア';
+        clearButton.title = 'すべての選択を解除';
         
-        if (selectedDishes[category] === null) {
-            noneButton.classList.add('selected');
-        }
-        
-        noneButton.addEventListener('click', () => {
+        clearButton.addEventListener('click', () => {
+            selectedDishes[category] = [];
             dishesRow.querySelectorAll('.dish-button').forEach(btn => {
                 btn.classList.remove('selected');
             });
-            noneButton.classList.add('selected');
-            selectedDishes[category] = null;
+            clearButton.classList.remove('selected');
             saveToLocalStorage();
             updateNutrition();
         });
-        dishesRow.appendChild(noneButton);
+        dishesRow.appendChild(clearButton);
 
         // CSV料理ボタン
         dishes.forEach(dish => {
             const button = createDishButton(dish, category, dishesRow);
             
-            if (selectedDishes[category] === dish.dish) {
+            if (selectedDishes[category].includes(dish.dish)) {
                 button.classList.add('selected');
             }
             
@@ -310,12 +238,22 @@ function createDishButton(dish, category, dishesRow) {
         button.appendChild(deleteBtn);
     }
     
+    // 複数選択対応
     button.addEventListener('click', () => {
-        dishesRow.querySelectorAll('.dish-button').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        button.classList.add('selected');
-        selectedDishes[category] = dish.dish;
+        const isSelected = button.classList.contains('selected');
+        
+        if (isSelected) {
+            // 選択を解除
+            button.classList.remove('selected');
+            selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
+        } else {
+            // 選択を追加
+            button.classList.add('selected');
+            if (!selectedDishes[category].includes(dish.dish)) {
+                selectedDishes[category].push(dish.dish);
+            }
+        }
+        
         saveToLocalStorage();
         updateNutrition();
     });
@@ -479,9 +417,7 @@ function deleteDish(category, dish) {
     nutritionData = nutritionData.filter(d => !(d.dish === dish.dish && customDishes[category].length === 0));
     
     // 選択されていた場合は選択解除
-    if (selectedDishes[category] === dish.dish) {
-        selectedDishes[category] = null;
-    }
+    selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
     
     // Google Sheetsから削除
     deleteFromGoogleSheets(dish);
@@ -723,6 +659,12 @@ function loadFromLocalStorage() {
     if (savedSelected) {
         try {
             selectedDishes = JSON.parse(savedSelected);
+            // 配列でない場合は配列に変換
+            Object.keys(selectedDishes).forEach(category => {
+                if (!Array.isArray(selectedDishes[category])) {
+                    selectedDishes[category] = selectedDishes[category] ? [selectedDishes[category]] : [];
+                }
+            });
         } catch (e) {
             console.error('選択状態の読み込みエラー:', e);
         }
@@ -730,28 +672,24 @@ function loadFromLocalStorage() {
 }
 
 function restoreUISelection() {
-    Object.entries(selectedDishes).forEach(([category, dishName]) => {
+    Object.entries(selectedDishes).forEach(([category, dishNames]) => {
         const categoryRow = document.querySelector(`[data-category="${category}"]`);
         if (!categoryRow) return;
         
         const dishesRow = categoryRow.querySelector('.dishes-row');
-        const allButtons = dishesRow.querySelectorAll('.dish-button, .none-button');
+        const allButtons = dishesRow.querySelectorAll('.dish-button');
         
         allButtons.forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        
-        if (dishName === null) {
-            const noneBtn = dishesRow.querySelector('.none-button');
-            if (noneBtn) noneBtn.classList.add('selected');
-        } else {
-            allButtons.forEach(btn => {
-                const label = btn.querySelector('.dish-button-label');
-                if (label && label.textContent === dishName) {
+            const label = btn.querySelector('.dish-button-label');
+            if (label) {
+                const dishName = label.textContent;
+                if (dishNames.includes(dishName)) {
                     btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
                 }
-            });
-        }
+            }
+        });
     });
 }
 
@@ -763,19 +701,21 @@ function updateNutrition() {
     let totalCarbs = 0;
     let totalCalories = 0;
     
-    Object.entries(selectedDishes).forEach(([category, dishName]) => {
-        if (dishName === null) return;
+    Object.entries(selectedDishes).forEach(([category, dishNames]) => {
+        if (!Array.isArray(dishNames)) return;
         
-        const data = nutritionData.find(
-            item => item.category === category && item.dish === dishName
-        );
-        
-        if (data) {
-            totalProtein += data.protein;
-            totalFat += data.fat;
-            totalCarbs += data.carbs;
-            totalCalories += data.calories;
-        }
+        dishNames.forEach(dishName => {
+            const data = nutritionData.find(
+                item => item.category === category && item.dish === dishName
+            );
+            
+            if (data) {
+                totalProtein += data.protein;
+                totalFat += data.fat;
+                totalCarbs += data.carbs;
+                totalCalories += data.calories;
+            }
+        });
     });
     
     updateNutritionDisplay(totalProtein, totalFat, totalCarbs, totalCalories);
@@ -843,6 +783,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadFromLocalStorage();
     checkForCacheClean();
     init();
+    restoreUISelection();
     updateNutrition();
     checkAndRestoreFromURL();
 });
