@@ -11,7 +11,14 @@ async function loadFromGoogleSheets() {
         console.log('Loading data from Google Sheets...');
         console.log('Using URL:', GOOGLE_APPS_SCRIPT_URL);
         
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow'
+        });
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -112,7 +119,7 @@ const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 
 // Google Apps Script のURL
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyeL--UDstJieAUzrYvu6m2nxSlIVQdwHknYtEtjHPHiydxdoGbZP4g59kVaYxp5akK2w/exec';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOgmU5zM3Nx7o3RsiklzDBRUvCmqipKsi0R73MVgbPixpzaXIHii1gqhSN_45acj_BTA/exec';
 
 // ==================== CSV パース ====================
 
@@ -446,7 +453,15 @@ async function saveToGoogleSheets(dish) {
     try {
         const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(dish)
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'add',
+                ...dish
+            }),
+            redirect: 'follow'
         });
         const result = await response.json();
         console.log('Dish saved to Google Sheets:', result);
@@ -502,11 +517,16 @@ async function deleteFromGoogleSheets(dish) {
     try {
         const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
             method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 action: 'delete',
                 dish: dish.dish,
                 category: dish.category
-            })
+            }),
+            redirect: 'follow'
         });
         const result = await response.json();
         console.log('Dish deleted from Google Sheets:', result);
