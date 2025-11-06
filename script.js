@@ -87,11 +87,14 @@ function parseCSV(csvText) {
 }
 
 // ==================== Google Sheets から読み込み ====================
-
 async function loadFromGoogleSheets() {
     try {
         console.log('Loading data from Google Sheets...');
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
+        // GETリクエストではCORSの問題は少ないが、念のためfetchオプションを追加
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+            method: 'GET',
+            mode: 'cors'
+        });
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -101,6 +104,9 @@ async function loadFromGoogleSheets() {
         
         if (Array.isArray(data) && data.length > 0) {
             nutritionData = data;
+            
+            // ★ 修正点: DBの最新状態を正確に反映するため、まずリセットする
+            discontinuedDishes = {}; 
             
             // Google Sheetsから販売状態を反映
             data.forEach(item => {
@@ -735,21 +741,6 @@ function loadFromLocalStorage() {
             });
         } catch (e) {
             console.error('選択状態の読み込みエラー:', e);
-        }
-    }
-    
-    // 販売中止設定を復元
-    if (savedDiscontinued) {
-        try {
-            discontinuedDishes = JSON.parse(savedDiscontinued);
-            // 配列でない場合は配列に変換
-            Object.keys(discontinuedDishes).forEach(category => {
-                if (!Array.isArray(discontinuedDishes[category])) {
-                    discontinuedDishes[category] = [];
-                }
-            });
-        } catch (e) {
-            console.error('販売中止設定の読み込みエラー:', e);
         }
     }
 }
