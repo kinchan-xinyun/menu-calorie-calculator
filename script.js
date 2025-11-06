@@ -112,7 +112,7 @@ const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 
 // Google Apps Script のURL
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhFD6w-2Gdg2Ig4g7Wm9MZZ7XDwOiMj-Rr_Z9RbQ0saRRjm5FVPz1iIdULRtPMSarxvg/exec';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxoxt3dAq6L7E5Cw_YLUPOcHHyyyg-e5GsmJyjeFlLm0tv2_xJsmtIbcvk1EeXiam91bg/exec';
 
 // ==================== CSV パース ====================
 
