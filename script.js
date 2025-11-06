@@ -132,7 +132,6 @@ async function loadFromGoogleSheets() {
 }
 
 // **この関数は現在使用されていませんが、以前のバージョンのために残しておきます。**
-// **現在は、より堅牢なupdateDishStatusOnGoogleSheetsが使用されています。**
 async function updateDishStatusOnGoogleSheets_OLD(payload) {
     const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
         method: 'POST',
@@ -218,14 +217,14 @@ function init() {
         });
 
         // 「追加」ボタン
-        const addButton = document.createElement('button');
-        addButton.className = 'add-button';
-        addButton.innerHTML = '➕ 追加';
-        addButton.addEventListener('click', () => {
-            currentCategory = category;
-            openAddDishModal(category);
-        });
-        dishesRow.appendChild(addButton);
+        // const addButton = document.createElement('button');
+        // addButton.className = 'add-button';
+        // addButton.innerHTML = '➕ 追加';
+        // addButton.addEventListener('click', () => {
+        //     currentCategory = category;
+        //     openAddDishModal(category);
+        // });
+        // dishesRow.appendChild(addButton);
         
         categoryRow.appendChild(categoryLabel);
         categoryRow.appendChild(dishesRow);
@@ -278,37 +277,32 @@ function createDishButton(dish, category, dishesRow) {
     const actionContainer = document.createElement('div');
     actionContainer.className = 'button-actions';
     
-    // 販売中止ボタン
-    const discontinueBtn = document.createElement('button');
-    discontinueBtn.className = 'status-button discontinue-button';
-    discontinueBtn.textContent = '×';
-    discontinueBtn.title = '販売中止';
-    discontinueBtn.type = 'button';
+
     
     const isDiscontinued = discontinuedDishes[category] && discontinuedDishes[category].includes(dish.dish);
-    if (isDiscontinued) {
-        discontinueBtn.classList.add('active');
-    }
+    // if (isDiscontinued) {
+    //     discontinueBtn.classList.add('active');
+    // }
     
-    discontinueBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleDiscontinued(category, dish);
-    });
-    actionContainer.appendChild(discontinueBtn);
+    // discontinueBtn.addEventListener('click', (e) => {
+    //     e.stopPropagation();
+    //     toggleDiscontinued(category, dish);
+    // });
+    // actionContainer.appendChild(discontinueBtn);
     
-    // カスタム料理の場合は削除ボタンを追加
-    if (isCustom) {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'status-button delete-button';
-        deleteBtn.textContent = '✕';
-        deleteBtn.title = '削除';
-        deleteBtn.type = 'button';
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteDish(category, dish);
-        });
-        actionContainer.appendChild(deleteBtn);
-    }
+    // // カスタム料理の場合は削除ボタンを追加
+    // if (isCustom) {
+    //     const deleteBtn = document.createElement('button');
+    //     deleteBtn.className = 'status-button delete-button';
+    //     deleteBtn.textContent = '✕';
+    //     deleteBtn.title = '削除';
+    //     deleteBtn.type = 'button';
+    //     deleteBtn.addEventListener('click', (e) => {
+    //         e.stopPropagation();
+    //         deleteDish(category, dish);
+    //     });
+    //     actionContainer.appendChild(deleteBtn);
+    // }
     
     button.appendChild(actionContainer);
     
