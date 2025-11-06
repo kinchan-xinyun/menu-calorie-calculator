@@ -1,9 +1,3 @@
-// ===== ページ読み込み時に LocalStorage を完全リセット =====
-window.addEventListener("load", () => {
-    localStorage.clear();
-    console.log("✅ LocalStorage を完全リセットしました");
-  });
-
 // ==================== Google Sheets から読み込み ====================
 
 async function loadFromGoogleSheets() {
@@ -11,14 +5,7 @@ async function loadFromGoogleSheets() {
         console.log('Loading data from Google Sheets...');
         console.log('Using URL:', GOOGLE_APPS_SCRIPT_URL);
         
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            redirect: 'follow'
-        });
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -119,7 +106,7 @@ const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 
 // Google Apps Script のURL
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOgmU5zM3Nx7o3RsiklzDBRUvCmqipKsi0R73MVgbPixpzaXIHii1gqhSN_45acj_BTA/exec';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLkkrgBEW7qTv_86lqri2OfqLbAwclDS_KjCLMFdlpUifkMB3V53xwrE5YvulJ3dDDGQ/exec';
 
 // ==================== CSV パース ====================
 
@@ -453,15 +440,7 @@ async function saveToGoogleSheets(dish) {
     try {
         const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
             method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'add',
-                ...dish
-            }),
-            redirect: 'follow'
+            body: JSON.stringify(dish)
         });
         const result = await response.json();
         console.log('Dish saved to Google Sheets:', result);
@@ -517,16 +496,11 @@ async function deleteFromGoogleSheets(dish) {
     try {
         const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
             method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({
                 action: 'delete',
                 dish: dish.dish,
                 category: dish.category
-            }),
-            redirect: 'follow'
+            })
         });
         const result = await response.json();
         console.log('Dish deleted from Google Sheets:', result);
