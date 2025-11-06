@@ -3,12 +3,14 @@ let nutritionData = [];
 let selectedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 let currentCategory = null;
 let customDishes = {};
+let discontinuedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 
 // LocalStorage キー
 const STORAGE_KEY_CUSTOM = 'customDishes';
 const STORAGE_KEY_SELECTED = 'selectedDishes';
 const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
+const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
 
 // Google Apps Script のURL
 const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLkkrgBEW7qTv_86lqri2OfqLbAwclDS_KjCLMFdlpUifkMB3V53xwrE5YvulJ3dDDGQ/exec';
@@ -130,6 +132,10 @@ function init() {
             customDishes[category] = [];
         }
         
+        if (!discontinuedDishes[category]) {
+            discontinuedDishes[category] = [];
+        }
+        
         const categoryRow = document.createElement('div');
         categoryRow.className = 'category-row';
         categoryRow.setAttribute('data-category', category);
@@ -224,10 +230,32 @@ function createDishButton(dish, category, dishesRow) {
     button.appendChild(img);
     button.appendChild(label);
     
+    // ボタンアクション用コンテナ
+    const actionContainer = document.createElement('div');
+    actionContainer.className = 'button-actions';
+    
+    // 販売中止ボタン
+    const discontinueBtn = document.createElement('button');
+    discontinueBtn.className = 'status-button discontinue-button';
+    discontinueBtn.textContent = '✕';
+    discontinueBtn.title = '販売中止';
+    discontinueBtn.type = 'button';
+    
+    const isDiscontinued = discontinuedDishes[category] && discontinuedDishes[category].includes(dish.dish);
+    if (isDiscontinued) {
+        discontinueBtn.classList.add('active');
+    }
+    
+    discontinueBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDiscontinued(category, dish);
+    });
+    actionContainer.appendChild(discontinueBtn);
+    
     // カスタム料理の場合は削除ボタンを追加
     if (isCustom) {
         const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-button';
+        deleteBtn.className = 'status-button delete-button';
         deleteBtn.textContent = '✕';
         deleteBtn.title = '削除';
         deleteBtn.type = 'button';
@@ -235,11 +263,23 @@ function createDishButton(dish, category, dishesRow) {
             e.stopPropagation();
             deleteDish(category, dish);
         });
-        button.appendChild(deleteBtn);
+        actionContainer.appendChild(deleteBtn);
+    }
+    
+    button.appendChild(actionContainer);
+    
+    // 販売中止時の表示
+    if (isDiscontinued) {
+        button.classList.add('discontinued');
     }
     
     // 複数選択対応
     button.addEventListener('click', () => {
+        // 販売中止の場合はクリック不可
+        if (discontinuedDishes[category] && discontinuedDishes[category].includes(dish.dish)) {
+            return;
+        }
+        
         const isSelected = button.classList.contains('selected');
         
         if (isSelected) {
@@ -419,6 +459,11 @@ function deleteDish(category, dish) {
     // 選択されていた場合は選択解除
     selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
     
+    // 販売中止設定から削除
+    if (discontinuedDishes[category]) {
+        discontinuedDishes[category] = discontinuedDishes[category].filter(d => d !== dish.dish);
+    }
+    
     // Google Sheetsから削除
     deleteFromGoogleSheets(dish);
     
@@ -443,6 +488,28 @@ async function deleteFromGoogleSheets(dish) {
     } catch (error) {
         console.error('Google Sheetsからの削除に失敗しました:', error);
     }
+}
+
+// 販売中止を切り替え
+function toggleDiscontinued(category, dish) {
+    if (!discontinuedDishes[category]) {
+        discontinuedDishes[category] = [];
+    }
+    
+    const isDiscontinued = discontinuedDishes[category].includes(dish.dish);
+    
+    if (isDiscontinued) {
+        // 販売中止を解除
+        discontinuedDishes[category] = discontinuedDishes[category].filter(d => d !== dish.dish);
+    } else {
+        // 販売中止に設定
+        discontinuedDishes[category].push(dish.dish);
+        // 選択されている場合は選択解除
+        selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
+    }
+    
+    saveToLocalStorage();
+    location.reload();
 }
 
 // ==================== シェア機能 ====================
@@ -586,10 +653,12 @@ function checkAndRestoreFromURL() {
 function saveToLocalStorage() {
     localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(customDishes));
     localStorage.setItem(STORAGE_KEY_SELECTED, JSON.stringify(selectedDishes));
+    localStorage.setItem(STORAGE_KEY_DISCONTINUED, JSON.stringify(discontinuedDishes));
     
     // SessionStorage バックアップ
     sessionStorage.setItem(BACKUP_KEY, JSON.stringify(customDishes));
     sessionStorage.setItem(STORAGE_KEY_SELECTED + '_backup', JSON.stringify(selectedDishes));
+    sessionStorage.setItem(STORAGE_KEY_DISCONTINUED, JSON.stringify(discontinuedDishes));
     sessionStorage.setItem(BACKUP_TIMESTAMP_KEY, Date.now().toString());
 }
 
@@ -628,6 +697,7 @@ function restoreFromBackup() {
 function loadFromLocalStorage() {
     const savedCustom = localStorage.getItem(STORAGE_KEY_CUSTOM);
     const savedSelected = localStorage.getItem(STORAGE_KEY_SELECTED);
+    const savedDiscontinued = localStorage.getItem(STORAGE_KEY_DISCONTINUED);
     
     // カスタム料理をデータに追加
     if (savedCustom) {
@@ -667,6 +737,21 @@ function loadFromLocalStorage() {
             });
         } catch (e) {
             console.error('選択状態の読み込みエラー:', e);
+        }
+    }
+    
+    // 販売中止設定を復元
+    if (savedDiscontinued) {
+        try {
+            discontinuedDishes = JSON.parse(savedDiscontinued);
+            // 配列でない場合は配列に変換
+            Object.keys(discontinuedDishes).forEach(category => {
+                if (!Array.isArray(discontinuedDishes[category])) {
+                    discontinuedDishes[category] = [];
+                }
+            });
+        } catch (e) {
+            console.error('販売中止設定の読み込みエラー:', e);
         }
     }
 }
