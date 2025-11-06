@@ -161,7 +161,7 @@ function init() {
     
     const categories = [...new Set(nutritionData.map(item => item.category))];
     
-    categories.forEach(category => {
+    categories.forEach((category, index) => {
         const dishes = nutritionData.filter(item => item.category === category);
         
         if (dishes.length === 0) return;
@@ -230,6 +230,13 @@ function init() {
         categoryRow.appendChild(categoryLabel);
         categoryRow.appendChild(dishesRow);
         container.appendChild(categoryRow);
+        
+        // カテゴリ間に矢印を追加（最後のカテゴリ以外）
+        if (index < categories.length - 1) {
+            const arrow = document.createElement('div');
+            arrow.className = 'category-arrow';
+            container.appendChild(arrow);
+        }
     });
     
     setupModal();
