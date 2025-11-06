@@ -1,4 +1,105 @@
-// グローバル変数
+// ===== ページ読み込み時に LocalStorage を完全リセット =====
+window.addEventListener("load", () => {
+    localStorage.clear();
+    console.log("✅ LocalStorage を完全リセットしました");
+  });
+
+// ==================== Google Sheets から読み込み ====================
+
+async function loadFromGoogleSheets() {
+    try {
+        console.log('Loading data from Google Sheets...');
+        console.log('Using URL:', GOOGLE_APPS_SCRIPT_URL);
+        
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+            nutritionData = data;
+            console.log('Data loaded from Google Sheets:', data.length, 'items');
+        } else {
+            console.warn('No data from Google Sheets, using CSV fallback');
+            await loadCSV();
+        }
+    } catch (error) {
+        console.warn('Google Sheetsからの読み込みに失敗。CSVから読み込みます:', error);
+        await loadCSV();
+    }
+}
+
+async function loadCSV() {
+    try {
+        const response = await fetch('menu.csv');
+        const csvText = await response.text();
+        parseCSV(csvText);
+    } catch (error) {
+        console.error('CSVの読み込みに失敗しました:', error);
+    }
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    
+    result.push(current);
+    return result;
+}
+
+function parseCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const values = parseCSVLine(line);
+        
+        if (values.length >= 5) {
+            const protein = values[2] ? parseFloat(values[2]) : 0;
+            const fat = values[3] ? parseFloat(values[3]) : 0;
+            const carbs = values[4] ? parseFloat(values[4]) : 0;
+            const calories = values[5] ? parseFloat(values[5]) : 0;
+            const imagePath = values[6] ? values[6].trim() : '';
+            
+            nutritionData.push({
+                category: values[0].trim(),
+                dish: values[1].trim(),
+                protein: protein,
+                fat: fat,
+                carbs: carbs,
+                calories: calories,
+                image: imagePath
+            });
+        }
+    }
+}
+
+function sanitizeFilename(filename) {
+    return filename
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/-+/g, '_');
+}// グローバル変数
 let nutritionData = [];
 let selectedDishes = {};
 let currentCategory = null;
@@ -9,6 +110,9 @@ const STORAGE_KEY_CUSTOM = 'customDishes';
 const STORAGE_KEY_SELECTED = 'selectedDishes';
 const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
+
+// Google Apps Script のURL
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhFD6w-2Gdg2Ig4g7Wm9MZZ7XDwOiMj-Rr_Z9RbQ0saRRjm5FVPz1iIdULRtPMSarxvg/exec';
 
 // ==================== CSV パース ====================
 
@@ -321,6 +425,9 @@ function addNewDish() {
     nutritionData.push(newDish);
     customDishes[currentCategory].push(newDish);
     
+    // Google Sheetsに追加
+    saveToGoogleSheets(newDish);
+    
     // UIに追加
     const categoryRow = document.querySelector(`[data-category="${currentCategory}"]`);
     const dishesRow = categoryRow.querySelector('.dishes-row');
@@ -333,6 +440,20 @@ function addNewDish() {
     
     const modal = document.getElementById('addDishModal');
     modal.classList.remove('show');
+}
+
+async function saveToGoogleSheets(dish) {
+    try {
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(dish)
+        });
+        const result = await response.json();
+        console.log('Dish saved to Google Sheets:', result);
+    } catch (error) {
+        console.error('Google Sheetsへの保存に失敗しました:', error);
+        alert('Google Sheetsへの保存に失敗しました（ローカルには保存されています）');
+    }
 }
 
 function setupRestoreModal() {
@@ -368,10 +489,166 @@ function deleteDish(category, dish) {
         selectedDishes[category] = null;
     }
     
+    // Google Sheetsから削除
+    deleteFromGoogleSheets(dish);
+    
     saveToLocalStorage();
     
     // UI更新（ページリロードで反映）
     location.reload();
+}
+
+async function deleteFromGoogleSheets(dish) {
+    try {
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'delete',
+                dish: dish.dish,
+                category: dish.category
+            })
+        });
+        const result = await response.json();
+        console.log('Dish deleted from Google Sheets:', result);
+    } catch (error) {
+        console.error('Google Sheetsからの削除に失敗しました:', error);
+    }
+}
+
+// ==================== シェア機能 ====================
+
+function setupShareButton() {
+    const shareBtn = document.getElementById('shareBtn');
+    const shareModal = document.getElementById('shareModal');
+    
+    console.log('setupShareButton called');
+    console.log('shareBtn:', shareBtn);
+    console.log('shareModal:', shareModal);
+    
+    if (!shareBtn) {
+        console.error('Share button not found - retrying in 500ms');
+        setTimeout(() => setupShareButton(), 500);
+        return;
+    }
+    
+    if (!shareModal) {
+        console.error('Share modal not found');
+        return;
+    }
+    
+    console.log('Adding click listener to share button');
+    
+    shareBtn.onclick = function() {
+        console.log('Share button clicked via onclick');
+        generateShareURL();
+        shareModal.classList.add('show');
+    };
+    
+    const shareClose = document.getElementById('shareClose');
+    const shareCancel = document.getElementById('shareCancel');
+    const copyBtn = document.getElementById('copyBtn');
+    
+    if (shareClose) {
+        shareClose.onclick = function() {
+            shareModal.classList.remove('show');
+        };
+    }
+    
+    if (shareCancel) {
+        shareCancel.onclick = function() {
+            shareModal.classList.remove('show');
+        };
+    }
+    
+    if (copyBtn) {
+        copyBtn.onclick = function() {
+            const shareUrl = document.getElementById('shareUrl');
+            shareUrl.select();
+            document.execCommand('copy');
+            
+            copyBtn.textContent = '✓ コピー完了';
+            copyBtn.classList.add('copied');
+            setTimeout(() => {
+                copyBtn.textContent = '📋 コピー';
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        };
+    }
+}
+
+function generateShareURL() {
+    try {
+        // カスタム料理と選択状態をBase64エンコード
+        const data = {
+            customDishes: customDishes,
+            selectedDishes: selectedDishes
+        };
+        
+        const jsonString = JSON.stringify(data);
+        const encoded = btoa(unescape(encodeURIComponent(jsonString)));
+        
+        const baseURL = window.location.href.split('?')[0].split('#')[0];
+        const shareURL = `${baseURL}?data=${encoded}`;
+        
+        console.log('Generated share URL:', shareURL);
+        
+        // URLを入力欄に表示
+        const shareUrlInput = document.getElementById('shareUrl');
+        if (shareUrlInput) {
+            shareUrlInput.value = shareURL;
+        }
+    } catch (e) {
+        console.error('Share URL generation error:', e);
+        alert('URLの生成に失敗しました');
+    }
+}
+
+function generateQRCode(url) {
+    const qrContainer = document.getElementById('qrCode');
+    qrContainer.innerHTML = '';
+    
+    try {
+        // QRCode.jsを使用（グローバル変数として存在）
+        new QRCode(qrContainer, {
+            text: url,
+            width: 200,
+            height: 200,
+            colorDark: '#333',
+            colorLight: '#fff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        console.log('QR Code generated successfully');
+    } catch (e) {
+        console.error('QR Code generation error:', e);
+        // QRコード生成に失敗した場合はURLのみ表示
+        qrContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999; font-size: 12px;">QRコード生成に失敗しました</div>';
+    }
+}
+
+function checkAndRestoreFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const data = params.get('data');
+    
+    if (data) {
+        try {
+            const decoded = JSON.parse(decodeURIComponent(escape(atob(data))));
+            
+            if (decoded.customDishes && decoded.selectedDishes) {
+                if (confirm('シェアされたデータを復元しますか？')) {
+                    customDishes = decoded.customDishes;
+                    selectedDishes = decoded.selectedDishes;
+                    saveToLocalStorage();
+                    
+                    // URLを清潔にする
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    location.reload();
+                }
+            }
+        } catch (e) {
+            console.error('データ復元エラー:', e);
+        }
+    }
 }
 
 // ==================== LocalStorage 管理 ====================
@@ -564,9 +841,14 @@ function updatePfcLabel(elementId, percent) {
 // ==================== ページロード ====================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadCSV();
+    console.log('Page load started');
+    
+    // Google Sheetsから読み込み
+    await loadFromGoogleSheets();
+    
     loadFromLocalStorage();
     checkForCacheClean();
     init();
     updateNutrition();
+    checkAndRestoreFromURL();
 });
