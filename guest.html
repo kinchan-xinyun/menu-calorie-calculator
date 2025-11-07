@@ -5,9 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>栄養情報ビューア</title>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Limelight&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <button class="hamburger-menu" id="hamburgerMenu" aria-label="メニュー">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    
+    <div class="menu-overlay" id="menuOverlay">
+        <div class="menu-content">
+            <div class="menu-header">
+                <h3>メニュー</h3>
+                <button class="menu-close" id="menuClose">&times;</button>
+            </div>
+            <div class="menu-items" id="menuItems">
+                <!-- カテゴリー一覧がここに動的に追加されます -->
+            </div>
+        </div>
+    </div>
+    
+    
     <div class="container">
         <div class="header">
             <img src="images/one_plate.jpg" alt="MY TEISHOKU ONEPLATE" class="header-logo">

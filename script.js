@@ -15,6 +15,33 @@ const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
 // Google Apps Script のURL
 const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWub4dZMxlzw7klDW4kcRNLI8P1Y-8-bKQRzyvde0EO-StSnx53j5ZV8Yi_4qLhCc_CQ/exec';
 
+// カテゴリ名のマッピング（日本語 → 英語）
+const categoryNameMap = {
+    '主食': { en: 'RICE', ja: '主食' },
+    '主菜': { en: 'MAIN', ja: '主菜' },
+    '副菜': { en: 'SIDE', ja: '副菜' },
+    'ドレッシング': { en: 'DRESSING', ja: 'ドレッシング' },
+    'その他': { en: 'OTHER', ja: 'その他' },
+    'DRINK/SOUP': { en: 'DRINK/SOUP', ja: 'ドリンク/スープ' },
+    // 旧カテゴリ名（互換性のため）
+    'ごはん': { en: 'RICE', ja: 'ごはん' },
+    'サラダ': { en: 'SALAD', ja: 'サラダ' },
+    'メイン': { en: 'MAIN', ja: 'メイン' },
+    'サイド': { en: 'SIDE', ja: 'サイド' },
+    'スープ': { en: 'SOUP', ja: 'スープ' },
+    'デザート': { en: 'DESSERT', ja: 'デザート' },
+    '飲み物': { en: 'DRINK', ja: '飲み物' }
+};
+
+// カテゴリ名を取得（マッピングがない場合は元の名前を使用）
+function getCategoryNames(category) {
+    if (categoryNameMap[category]) {
+        return categoryNameMap[category];
+    }
+    // マッピングがない場合は、カテゴリ名を大文字にして英語として使用
+    return { en: category.toUpperCase(), ja: category };
+}
+
 // ==================== CSV パース ====================
 
 function parseCSVLine(line) {
@@ -184,7 +211,18 @@ function init() {
         
         const categoryLabel = document.createElement('div');
         categoryLabel.className = 'category-label';
-        categoryLabel.textContent = category;
+        
+        const categoryNames = getCategoryNames(category);
+        const enLabel = document.createElement('span');
+        enLabel.className = 'category-label-en';
+        enLabel.textContent = categoryNames.en;
+        
+        const jaLabel = document.createElement('span');
+        jaLabel.className = 'category-label-ja';
+        jaLabel.textContent = categoryNames.ja;
+        
+        categoryLabel.appendChild(enLabel);
+        categoryLabel.appendChild(jaLabel);
         
         const dishesRow = document.createElement('div');
         dishesRow.className = 'dishes-row';
@@ -270,7 +308,13 @@ function createDishButton(dish, category, dishesRow) {
         img.style.display = 'none';
         const emoji = document.createElement('span');
         emoji.textContent = '🍽️';
-        emoji.style.fontSize = '28px';
+        emoji.style.fontSize = '32px';
+        emoji.style.width = '60px';
+        emoji.style.height = '60px';
+        emoji.style.display = 'flex';
+        emoji.style.alignItems = 'center';
+        emoji.style.justifyContent = 'center';
+        emoji.style.flexShrink = '0';
         button.insertBefore(emoji, button.firstChild);
     };
     
@@ -836,8 +880,101 @@ function updatePfcLabel(elementId, percent) {
 
 // ==================== ページロード ====================
 
+// ==================== ハンバーガーメニュー ====================
+
+function setupHamburgerMenu() {
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const menuClose = document.getElementById('menuClose');
+    const menuItems = document.getElementById('menuItems');
+    
+    function openMenu() {
+        // メニューを開くたびにカテゴリー一覧を更新
+        updateMenuItems();
+        hamburgerMenu.classList.add('active');
+        menuOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMenu() {
+        hamburgerMenu.classList.remove('active');
+        menuOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    
+    function scrollToCategory(category) {
+        const categoryRow = document.querySelector(`[data-category="${category}"]`);
+        if (categoryRow) {
+            closeMenu();
+            // 少し遅延を入れてメニューが閉じてからスクロール
+            setTimeout(() => {
+                // headerの直下に表示されるようにスクロール位置を調整
+                const header = document.querySelector('.header');
+                const headerHeight = header ? header.offsetHeight : 100;
+                
+                // カテゴリーの位置を取得
+                const categoryRect = categoryRow.getBoundingClientRect();
+                const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+                
+                // headerの直下に来るように計算
+                const targetScrollY = currentScrollY + categoryRect.top - headerHeight;
+                
+                window.scrollTo({
+                    top: targetScrollY,
+                    behavior: 'smooth'
+                });
+            }, 300);
+        }
+    }
+    
+    function updateMenuItems() {
+        // 既存のメニュー項目をクリア
+        menuItems.innerHTML = '';
+        
+        // カテゴリー一覧を取得
+        const categories = [...new Set(nutritionData.map(item => item.category))];
+        
+        categories.forEach(category => {
+            const categoryNames = getCategoryNames(category);
+            const menuItem = document.createElement('a');
+            menuItem.href = '#';
+            menuItem.className = 'menu-item';
+            menuItem.textContent = `${categoryNames.en} (${categoryNames.ja})`;
+            
+            menuItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                scrollToCategory(category);
+            });
+            
+            menuItems.appendChild(menuItem);
+        });
+    }
+    
+    hamburgerMenu.addEventListener('click', () => {
+        if (hamburgerMenu.classList.contains('active')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+    
+    menuClose.addEventListener('click', closeMenu);
+    
+    menuOverlay.addEventListener('click', (e) => {
+        if (e.target === menuOverlay) {
+            closeMenu();
+        }
+    });
+    
+    // グローバルに公開して、init()後に呼び出せるようにする
+    window.updateMenuItems = updateMenuItems;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Page load started');
+    
+    // ハンバーガーメニューの設定
+    setupHamburgerMenu();
     
     // Google Sheetsから読み込み
     await loadFromGoogleSheets();
@@ -847,4 +984,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     init();
     restoreUISelection();
     updateNutrition();
+    
+    // メニュー項目を更新
+    if (window.updateMenuItems) {
+        window.updateMenuItems();
+    }
 });

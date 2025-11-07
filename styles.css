@@ -27,6 +27,164 @@ body {
     padding: 0;
     color: var(--text-dark);
     overflow-x: hidden;
+    position: relative;
+}
+
+/* ハンバーガーメニューボタン */
+.hamburger-menu {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+}
+
+.hamburger-menu:hover {
+    background: #f9fafb;
+    box-shadow: var(--shadow-lg);
+}
+
+.hamburger-menu:active {
+    transform: scale(0.95);
+}
+
+.hamburger-menu span {
+    display: block;
+    width: 24px;
+    height: 3px;
+    background: var(--text-dark);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* メニューオーバーレイ */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.menu-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+.menu-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100%;
+    background: white;
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+
+.menu-overlay.show .menu-content {
+    transform: translateX(0);
+}
+
+.menu-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--soft-yellow);
+}
+
+.menu-header h3 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.menu-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    font-size: 28px;
+    color: var(--text-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+    touch-action: manipulation;
+}
+
+.menu-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-dark);
+}
+
+.menu-close:active {
+    transform: scale(0.9);
+}
+
+.menu-items {
+    padding: 16px 0;
+}
+
+.menu-item {
+    display: block;
+    padding: 16px 20px;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid var(--border);
+}
+
+.menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-item:hover {
+    background: #f9fafb;
+}
+
+.menu-item:active {
+    background: #f3f4f6;
 }
 
 .container {
@@ -42,17 +200,18 @@ body {
 /* ヘッダー */
 .header {
     background: linear-gradient(135deg, var(--accent-yellow) 0%, #FFD93D 100%);
-    padding: 16px;
     text-align: center;
     position: sticky;
     top: 0;
     z-index: 100;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    height: 100px;
+    padding-top: 20px;
 }
 
 .header-logo {
     width: 100%;
-    max-width: 280px;
+    max-width: 200px;
     height: auto;
     object-fit: contain;
 }
@@ -78,7 +237,7 @@ body {
 
 .total-header h2 {
     color: var(--text-dark);
-    font-size: 18px;
+    font-size: 24px;
     font-weight: 700;
     margin: 0;
 }
@@ -94,13 +253,13 @@ body {
 }
 
 .calories-number {
-    font-size: 24px;
+    font-size: 32px;
     font-weight: 800;
     line-height: 1;
 }
 
 .calories-unit {
-    font-size: 11px;
+    font-size: 18px;
     opacity: 0.95;
     margin-top: 2px;
 }
@@ -138,7 +297,7 @@ body {
 }
 
 .nutrition-label {
-    font-size: 10px;
+    font-size: 18px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-light);
@@ -147,14 +306,14 @@ body {
 }
 
 .nutrition-value {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--text-dark);
     margin-bottom: 2px;
 }
 
 .nutrition-unit {
-    font-size: 10px;
+    font-size: 18px;
     color: var(--text-light);
 }
 
@@ -163,6 +322,7 @@ body {
     padding: 16px;
     background: var(--soft-yellow);
     flex: 1;
+    position: relative;
 }
 
 .categories-container {
@@ -207,11 +367,9 @@ body {
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
     transition: all 0.3s ease;
     scroll-margin-top: 100px;
+    scroll-snap-align: start;
 }
 
 .category-row.next-category {
@@ -232,109 +390,99 @@ body {
 .category-label {
     width: 100%;
     font-weight: 700;
-    color: white;
-    font-size: 16px;
-    padding: 12px 16px;
-    border-radius: 12px;
+    color: var(--text-dark);
+    font-size: 20px;
+    padding: 16px 0 20px 0;
+    text-align: left;
+    position: relative;
+}
+
+.category-label-en {
+    font-family: "Limelight", sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--dark-green);
+    display: block;
     text-align: center;
-    border: none;
-    background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-green) 100%);
-    box-shadow: var(--shadow);
+    border-bottom: 3px solid var(--fat);
+}
+
+.category-label-ja {
+    font-family: "Yusei Magic", sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-light);
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 70px;
 }
 
 .dishes-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .dish-button {
-    padding: 12px 8px;
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    background: white;
+    padding: 12px;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: var(--soft-yellow);
     color: var(--text-dark);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    transition: background-color 0.2s;
     position: relative;
-    box-shadow: var(--shadow);
+    box-shadow: none;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 100px;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 70px;
     touch-action: manipulation;
 }
 
+.dish-button:last-child {
+    border-bottom: none;
+}
+
 .dish-button-img {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    width: 80px;
+    height: auto;
+    flex-shrink: 0;
 }
 
 .dish-button-label {
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
-    text-align: center;
-    line-height: 1.3;
-}
-
-.dish-button:hover {
-    border-color: var(--primary-green);
-    background: #f0fdfa;
-}
-
-.dish-button:active {
-    border-color: var(--primary-green);
-    background: #f0fdfa;
-    transform: scale(0.98);
+    text-align: left;
+    line-height: 1.4;
+    padding-left: 20px;
+    padding-right: 10px;
+    flex: 1;
 }
 
 .dish-button.selected {
-    background: linear-gradient(135deg, #d68910 0%, #b9770e 100%);
+    background: linear-gradient(135deg, #e3bf86 0%, #b9770e 100%);
     color: white;
-    border-color: #d68910;
-    box-shadow: 0 4px 12px rgba(214, 137, 16, 0.3);
-}
-
-.dish-button.selected:active {
-    border-color: #b9770e;
-    background: linear-gradient(135deg, #b9770e 0%, #9c640c 100%);
-    transform: scale(0.98);
 }
 
 .dish-button.none-button {
-    border: 2px dashed var(--border);
+    border-bottom: 1px dashed var(--border);
     background: #fafaf7;
     color: var(--text-light);
 }
 
-.dish-button.none-button:hover {
-    border-color: var(--text-light);
-    background: white;
-}
-
-.dish-button.none-button:active {
-    border-color: var(--text-light);
-    background: white;
-    transform: scale(0.98);
-}
-
 .dish-button.none-button.selected {
-    background: linear-gradient(135deg, #d68910 0%, #b9770e 100%);
+    background: linear-gradient(135deg, #e3bf86 0%, #b9770e 100%);
     color: white;
-    border-color: #d68910;
-}
-
-.dish-button.none-button.selected:active {
-    border-color: #b9770e;
-    background: linear-gradient(135deg, #b9770e 0%, #9c640c 100%);
-    transform: scale(0.98);
+    border-bottom-color: rgba(255, 255, 255, 0.2);
 }
 
 /* 販売中止スタイル */
@@ -355,7 +503,7 @@ body {
     color: white;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 20px;
     font-weight: bold;
     white-space: nowrap;
     pointer-events: none;
@@ -412,21 +560,22 @@ body {
 
 .add-button {
     padding: 12px;
-    border: 2px solid var(--accent-yellow);
-    border-radius: 12px;
-    background: white;
-    color: var(--accent-yellow);
-    font-size: 13px;
+    border: 2px solid #fbbf24;
+    border-radius: 20px;
+    background:var(--soft-yellow);
+    color: #92400e;
+    font-size: 20px;
     font-weight: 700;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
-    box-shadow: var(--shadow);
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    min-height: 100px;
+    gap: 8px;
+    min-height: 70px;
     touch-action: manipulation;
+    margin-top: 12px;
 }
 
 .add-button:active {
@@ -436,28 +585,46 @@ body {
 }
 
 .clear-button {
-    grid-column: 1 / -1;
-    padding: 10px;
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    background: #f9fafb;
-    color: var(--text-light);
-    font-size: 13px;
-    font-weight: 600;
+    padding: 10px 20px;
+    border: 2px solid #fbbf24;
+    border-radius: 20px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
     touch-action: manipulation;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-height: auto;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+    margin: 12px 0 12px 0;
+    align-self: flex-start;
+}
+
+.clear-button::before {
+    content: '↺';
+    font-size: 18px;
+    display: inline-block;
+    font-weight: bold;
 }
 
 .clear-button:active {
-    background: #e5e7eb;
-    transform: scale(0.98);
+    background: #fde68a;
+    border-color: #f59e0b;
+    transform: scale(0.95);
+    box-shadow: 0 1px 4px rgba(251, 191, 36, 0.2);
 }
 
 .clear-button.selected {
-    background: var(--soft-yellow);
-    border-color: var(--accent-yellow);
-    color: var(--text-dark);
+    background: #fde68a;
+    color: #78350f;
+    border-color: #f59e0b;
 }
 
 /* PFCセクション */
@@ -472,7 +639,7 @@ body {
 .pfc-section h3 {
     color: var(--text-dark);
     margin-bottom: 16px;
-    font-size: 18px;
+    font-size: 28px;
     font-weight: 700;
     border-left: 4px solid var(--primary-green);
     padding-left: 10px;
@@ -507,7 +674,7 @@ body {
 .pfc-label {
     color: white;
     font-weight: 700;
-    font-size: 11px;
+    font-size: 16px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
     padding: 0 6px;
@@ -572,7 +739,7 @@ body {
 .pfc-detail-label {
     font-weight: 600;
     color: var(--text-dark);
-    font-size: 14px;
+    font-size: 18px;
 }
 
 .pfc-detail-right {
@@ -584,14 +751,14 @@ body {
 .pfc-detail-value {
     font-weight: 700;
     color: var(--carbs);
-    font-size: 16px;
+    font-size: 20px;
     min-width: 45px;
     text-align: right;
 }
 
 .pfc-detail-kcal {
     color: var(--text-light);
-    font-size: 12px;
+    font-size: 18px;
     min-width: 35px;
 }
 
@@ -601,7 +768,7 @@ body {
     border-radius: 16px;
     font-weight: 700;
     color: var(--primary-green);
-    font-size: 11px;
+    font-size: 18px;
     min-width: 50px;
     text-align: center;
 }
