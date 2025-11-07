@@ -25,6 +25,7 @@ body {
     background: linear-gradient(180deg, #fff8e8 0%, #ffe5b4 100%);
     min-height: 100vh;
     padding: 0;
+    padding-bottom: 70px;
     color: var(--text-dark);
     overflow-x: hidden;
     position: relative;
@@ -316,6 +317,80 @@ body {
 .nutrition-unit {
     font-size: 18px;
     color: var(--text-light);
+}
+
+/* 選択された料理リスト */
+.selected-dishes-list {
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--soft-yellow);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.selected-dishes-list-title {
+    font-family: 'Yusei Magic', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    border-left: 4px solid var(--primary-green);
+    padding-left: 10px;
+}
+
+.selected-dish-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
+}
+
+.selected-dish-item-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--primary-green);
+    flex-shrink: 0;
+}
+
+.selected-dish-item-name {
+    font-family: "Yuji Syuku", serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    flex: 1;
+}
+
+.selected-dish-delete {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: #ff4444;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(255, 68, 68, 0.3);
+}
+
+.selected-dish-delete:active {
+    transform: scale(0.9);
+    background: #cc0000;
 }
 
 /* メニューセクション */
@@ -776,6 +851,110 @@ body {
     font-size: 14px;
     min-width: 50px;
     text-align: center;
+}
+
+/* 固定表示のPFCバランス */
+.fixed-pfc-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 98;
+    background: white;
+    border-top: 2px solid var(--border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+    padding: 12px 16px;
+    transition: transform 0.3s ease;
+    transform: translateY(0);
+}
+
+.fixed-pfc-bar.hidden {
+    transform: translateY(100%);
+}
+
+.fixed-pfc-content {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.selected-dishes-images {
+    display: flex;
+    gap: 6px;
+    padding: 8px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.selected-dishes-images::-webkit-scrollbar {
+    display: none;
+}
+
+.selected-dish-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--primary-green);
+    box-shadow: 0 2px 6px rgba(26, 140, 94, 0.3);
+    flex-shrink: 0;
+}
+
+.selected-dish-more {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-green) 100%);
+    color: white;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(26, 140, 94, 0.3);
+    flex-shrink: 0;
+}
+
+.fixed-pfc-bar-container {
+    background: linear-gradient(135deg, #e8f0eb 0%, #d1e7dd 100%);
+    padding: 4px;
+    border-radius: 20px;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.fixed-pfc-bar-inner {
+    display: flex;
+    height: 40px;
+    border-radius: 16px;
+    overflow: hidden;
+    gap: 0;
+}
+
+.fixed-pfc-bar-inner .pfc-segment {
+    transition: width 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    position: relative;
+}
+
+.fixed-pfc-bar-inner .pfc-label {
+    font-size: 11px;
+    padding: 0 2px;
+    line-height: 1;
+}
+
+.fixed-pfc-type {
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    line-height: 1;
+    display: block;
 }
 
 /* モーダル */

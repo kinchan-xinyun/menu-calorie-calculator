@@ -29,7 +29,6 @@
         </div>
     </div>
     
-
     <div class="container">
         <div class="header">
             <img src="images/one_plate.jpg" alt="MY TEISHOKU ONEPLATE" class="header-logo">
@@ -69,6 +68,10 @@
                         <div class="nutrition-value" id="total-carbs">0</div>
                         <div class="nutrition-unit">g</div>
                     </div>
+                </div>
+
+                <div id="selectedDishesList" class="selected-dishes-list">
+                    <!-- 選択された料理がここに動的に追加されます -->
                 </div>
 
                 <div class="pfc-section">
@@ -124,6 +127,29 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 固定表示のPFCバランス -->
+    <div id="fixedPfcBar" class="fixed-pfc-bar">
+        <div class="fixed-pfc-content">
+            <div id="selectedDishesImages" class="selected-dishes-images"></div>
+            <div class="fixed-pfc-bar-container">
+                <div class="fixed-pfc-bar-inner" id="fixed-pfc-bar">
+                    <div class="pfc-segment protein-segment" id="fixed-protein-segment" style="width: 0%">
+                        <span class="fixed-pfc-type">P</span>
+                        <span class="pfc-label" id="fixed-protein-percent"></span>
+                    </div>
+                    <div class="pfc-segment fat-segment" id="fixed-fat-segment" style="width: 0%">
+                        <span class="fixed-pfc-type">F</span>
+                        <span class="pfc-label" id="fixed-fat-percent"></span>
+                    </div>
+                    <div class="pfc-segment carbs-segment" id="fixed-carbs-segment" style="width: 0%">
+                        <span class="fixed-pfc-type">C</span>
+                        <span class="pfc-label" id="fixed-carbs-percent"></span>
                     </div>
                 </div>
             </div>

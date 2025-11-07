@@ -826,6 +826,157 @@ function updateNutrition() {
     
     updateNutritionDisplay(totalProtein, totalFat, totalCarbs, totalCalories);
     updatePFCChart(totalProtein, totalFat, totalCarbs);
+    updateSelectedDishesImages();
+    updateSelectedDishesList();
+}
+
+function updateSelectedDishesImages() {
+    const container = document.getElementById('selectedDishesImages');
+    if (!container) return;
+    
+    // 既存の画像をクリア
+    container.innerHTML = '';
+    
+    // 選択された料理を収集
+    const selectedDishData = getSelectedDishData();
+    
+    // 画像を表示（最大10個まで）
+    selectedDishData.slice(0, 10).forEach(dish => {
+        const img = document.createElement('img');
+        img.className = 'selected-dish-image';
+        
+        if (dish.image && dish.image.startsWith('data:image')) {
+            img.src = dish.image;
+        } else if (dish.image) {
+            img.src = dish.image;
+        } else {
+            img.src = `images/${sanitizeFilename(dish.dish)}.jpg`;
+        }
+        
+        img.alt = dish.dish;
+        img.onerror = function() {
+            img.style.display = 'none';
+        };
+        
+        container.appendChild(img);
+    });
+    
+    // 10個以上ある場合は「+N」を表示
+    if (selectedDishData.length > 10) {
+        const moreBadge = document.createElement('div');
+        moreBadge.className = 'selected-dish-more';
+        moreBadge.textContent = `+${selectedDishData.length - 10}`;
+        container.appendChild(moreBadge);
+    }
+}
+
+function getSelectedDishData() {
+    const selectedDishData = [];
+    Object.entries(selectedDishes).forEach(([category, dishNames]) => {
+        if (!Array.isArray(dishNames)) return;
+        
+        dishNames.forEach(dishName => {
+            const data = nutritionData.find(
+                item => item.category === category && item.dish === dishName
+            );
+            if (data) {
+                selectedDishData.push(data);
+            }
+        });
+    });
+    return selectedDishData;
+}
+
+function updateSelectedDishesList() {
+    const container = document.getElementById('selectedDishesList');
+    if (!container) return;
+    
+    // 既存の内容をクリア
+    container.innerHTML = '';
+    
+    // 選択された料理を取得
+    const selectedDishData = getSelectedDishData();
+    
+    if (selectedDishData.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'flex';
+    
+    // タイトルを追加
+    const title = document.createElement('div');
+    title.className = 'selected-dishes-list-title';
+    title.textContent = '選択されたメニュー';
+    container.appendChild(title);
+    
+    // 各料理を表示
+    selectedDishData.forEach(dish => {
+        const item = document.createElement('div');
+        item.className = 'selected-dish-item';
+        item.setAttribute('data-category', dish.category);
+        item.setAttribute('data-dish-name', dish.dish);
+        
+        const img = document.createElement('img');
+        img.className = 'selected-dish-item-image';
+        
+        if (dish.image && dish.image.startsWith('data:image')) {
+            img.src = dish.image;
+        } else if (dish.image) {
+            img.src = dish.image;
+        } else {
+            img.src = `images/${sanitizeFilename(dish.dish)}.jpg`;
+        }
+        
+        img.alt = dish.dish;
+        img.onerror = function() {
+            img.style.display = 'none';
+            const emoji = document.createElement('span');
+            emoji.textContent = '🍽️';
+            emoji.style.fontSize = '28px';
+            item.insertBefore(emoji, item.firstChild);
+        };
+        
+        const name = document.createElement('div');
+        name.className = 'selected-dish-item-name';
+        name.textContent = dish.dish;
+        
+        // 削除ボタンを追加
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'selected-dish-delete';
+        deleteButton.innerHTML = '×';
+        deleteButton.setAttribute('aria-label', '削除');
+        
+        // 削除ボタンのクリックで選択解除
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // 親要素へのイベント伝播を防ぐ
+            
+            const category = item.getAttribute('data-category');
+            const dishName = item.getAttribute('data-dish-name');
+            
+            // 選択を解除
+            if (selectedDishes[category]) {
+                selectedDishes[category] = selectedDishes[category].filter(d => d !== dishName);
+            }
+            
+            // 対応するボタンの選択状態を更新
+            const categoryRow = document.querySelector(`.category-row[data-category="${category}"]`);
+            if (categoryRow) {
+                const button = categoryRow.querySelector(`.dish-button[data-dish-name="${dishName}"]`);
+                if (button) {
+                    button.classList.remove('selected');
+                }
+            }
+            
+            saveToLocalStorage();
+            updateNutrition();
+        });
+        
+        item.appendChild(img);
+        item.appendChild(name);
+        item.appendChild(deleteButton);
+        container.appendChild(item);
+    });
 }
 
 function updateNutritionDisplay(protein, fat, carbs, calories) {
@@ -851,6 +1002,7 @@ function updatePFCChart(protein, fat, carbs) {
         carbsPercent = (carbsKcal / totalPfcKcal) * 100;
     }
     
+    // 通常のPFCチャートを更新
     document.getElementById('protein-segment').style.width = proteinPercent + '%';
     document.getElementById('fat-segment').style.width = fatPercent + '%';
     document.getElementById('carbs-segment').style.width = carbsPercent + '%';
@@ -866,6 +1018,25 @@ function updatePFCChart(protein, fat, carbs) {
     document.getElementById('protein-percent-detail').textContent = proteinPercent.toFixed(1) + '%';
     document.getElementById('fat-percent-detail').textContent = fatPercent.toFixed(1) + '%';
     document.getElementById('carbs-percent-detail').textContent = carbsPercent.toFixed(1) + '%';
+    
+    // 固定表示のPFCバランスを更新
+    updateFixedPfcBar(proteinPercent, fatPercent, carbsPercent);
+}
+
+function updateFixedPfcBar(proteinPercent, fatPercent, carbsPercent) {
+    const fixedProteinSegment = document.getElementById('fixed-protein-segment');
+    const fixedFatSegment = document.getElementById('fixed-fat-segment');
+    const fixedCarbsSegment = document.getElementById('fixed-carbs-segment');
+    
+    if (fixedProteinSegment && fixedFatSegment && fixedCarbsSegment) {
+        fixedProteinSegment.style.width = proteinPercent + '%';
+        fixedFatSegment.style.width = fatPercent + '%';
+        fixedCarbsSegment.style.width = carbsPercent + '%';
+        
+        updatePfcLabel('fixed-protein-percent', proteinPercent);
+        updatePfcLabel('fixed-fat-percent', fatPercent);
+        updatePfcLabel('fixed-carbs-percent', carbsPercent);
+    }
 }
 
 function updatePfcLabel(elementId, percent) {
@@ -970,6 +1141,32 @@ function setupHamburgerMenu() {
     window.updateMenuItems = updateMenuItems;
 }
 
+// ==================== 固定PFCバランスの表示制御 ====================
+
+function setupFixedPfcBarVisibility() {
+    const fixedPfcBar = document.getElementById('fixedPfcBar');
+    const resultContainer = document.getElementById('result-container');
+    
+    if (!fixedPfcBar || !resultContainer) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // 栄養情報セクションが表示されている場合は非表示
+                fixedPfcBar.classList.add('hidden');
+            } else {
+                // 栄養情報セクションが表示されていない場合は表示
+                fixedPfcBar.classList.remove('hidden');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '-50px 0px 0px 0px'
+    });
+    
+    observer.observe(resultContainer);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Page load started');
     
@@ -989,4 +1186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.updateMenuItems) {
         window.updateMenuItems();
     }
+    
+    // 固定PFCバランスの表示制御を設定
+    setupFixedPfcBarVisibility();
 });
