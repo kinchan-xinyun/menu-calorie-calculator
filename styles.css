@@ -21,7 +21,8 @@
 }
 
 body {
-    font-family: "Yuji Syuku", serif;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
     background: linear-gradient(180deg, #fff8e8 0%, #ffe5b4 100%);
     min-height: 100vh;
     padding: 0;
@@ -299,23 +300,28 @@ body {
 }
 
 .nutrition-label {
-    font-size: 18px;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
+    font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-light);
-    font-weight: 600;
     margin-bottom: 4px;
 }
 
 .nutrition-value {
-    font-size: 24px;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
+    font-size: 20px;
     font-weight: 800;
     color: var(--text-dark);
     margin-bottom: 2px;
 }
 
 .nutrition-unit {
-    font-size: 18px;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
+    font-size: 16px;
     color: var(--text-light);
 }
 
@@ -361,9 +367,9 @@ body {
 }
 
 .selected-dish-item-name {
-    font-family: "Yuji Syuku", serif;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
     font-size: 14px;
-    font-weight: 600;
     color: var(--text-dark);
     flex: 1;
 }
@@ -505,7 +511,7 @@ body {
 .dish-button {
     padding: 12px;
     border: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px dashed var(--border);
     border-radius: 0;
     background: var(--soft-yellow);
     color: var(--text-dark);
@@ -535,9 +541,9 @@ body {
 }
 
 .dish-button-label {
-    font-family: "Yuji Syuku", serif;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
     font-size: 14px;
-    font-weight: 600;
     text-align: left;
     line-height: 1.4;
     padding-left: 20px;
@@ -636,14 +642,14 @@ body {
 }
 
 .add-button {
-    font-family: 'Yuji Syuku', serif;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
     padding: 12px;
     border: 2px solid #fbbf24;
     border-radius: 20px;
     background:var(--soft-yellow);
     color: #92400e;
     font-size: 20px;
-    font-weight: 700;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
     display: flex;
@@ -663,14 +669,14 @@ body {
 }
 
 .clear-button {
-    font-family: 'Yuji Syuku', serif;
+    font-family: "Kaisei Decol", serif;
+    font-weight: 900;
     padding: 10px 20px;
     border: 2px solid #fbbf24;
     border-radius: 20px;
     background: #fef3c7;
     color: #92400e;
     font-size: 16px;
-    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
     touch-action: manipulation;
@@ -891,6 +897,11 @@ body {
     display: none;
 }
 
+.selected-dish-image-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
 .selected-dish-image {
     width: 40px;
     height: 40px;
@@ -898,7 +909,34 @@ body {
     border-radius: 8px;
     border: 2px solid var(--primary-green);
     box-shadow: 0 2px 6px rgba(26, 140, 94, 0.3);
-    flex-shrink: 0;
+    display: block;
+}
+
+.selected-dish-image-delete {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: #ff4444;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(255, 68, 68, 0.4);
+    transition: all 0.2s ease;
+}
+
+.selected-dish-image-delete:active {
+    transform: scale(0.9);
+    background: #cc0000;
 }
 
 .selected-dish-more {

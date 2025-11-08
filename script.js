@@ -258,7 +258,7 @@ function init() {
         // 「追加」ボタン
         const addButton = document.createElement('button');
         addButton.className = 'add-button';
-        addButton.innerHTML = '➕ 追加';
+        addButton.innerHTML = '+ 追加';
         addButton.addEventListener('click', () => {
             currentCategory = category;
             openAddDishModal(category);
@@ -842,6 +842,11 @@ function updateSelectedDishesImages() {
     
     // 画像を表示（最大10個まで）
     selectedDishData.slice(0, 10).forEach(dish => {
+        const imageWrapper = document.createElement('div');
+        imageWrapper.className = 'selected-dish-image-wrapper';
+        imageWrapper.setAttribute('data-category', dish.category);
+        imageWrapper.setAttribute('data-dish-name', dish.dish);
+        
         const img = document.createElement('img');
         img.className = 'selected-dish-image';
         
@@ -858,7 +863,40 @@ function updateSelectedDishesImages() {
             img.style.display = 'none';
         };
         
-        container.appendChild(img);
+        // 削除ボタンを追加
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'selected-dish-image-delete';
+        deleteButton.innerHTML = '×';
+        deleteButton.setAttribute('aria-label', '削除');
+        
+        // 削除ボタンのクリックで選択解除
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            const category = imageWrapper.getAttribute('data-category');
+            const dishName = imageWrapper.getAttribute('data-dish-name');
+            
+            // 選択を解除
+            if (selectedDishes[category]) {
+                selectedDishes[category] = selectedDishes[category].filter(d => d !== dishName);
+            }
+            
+            // 対応するボタンの選択状態を更新
+            const categoryRow = document.querySelector(`.category-row[data-category="${category}"]`);
+            if (categoryRow) {
+                const button = categoryRow.querySelector(`.dish-button[data-dish-name="${dishName}"]`);
+                if (button) {
+                    button.classList.remove('selected');
+                }
+            }
+            
+            saveToLocalStorage();
+            updateNutrition();
+        });
+        
+        imageWrapper.appendChild(img);
+        imageWrapper.appendChild(deleteButton);
+        container.appendChild(imageWrapper);
     });
     
     // 10個以上ある場合は「+N」を表示
