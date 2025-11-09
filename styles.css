@@ -82,7 +82,7 @@ body {
 }
 
 .hamburger-menu.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(7px, -7px);
+    transform: rotate(-45deg) translate(5px, -5px);
 }
 
 /* メニューオーバーレイ */
@@ -131,6 +131,7 @@ body {
 }
 
 .menu-header h3 {
+    font-family: "Yusei Magic", sans-serif;
     font-size: 24px;
     font-weight: 700;
     color: var(--text-dark);
@@ -167,6 +168,7 @@ body {
 }
 
 .menu-item {
+    font-family: "Yusei Magic", sans-serif;
     display: block;
     padding: 16px 20px;
     color: var(--text-dark);
