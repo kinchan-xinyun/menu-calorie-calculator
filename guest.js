@@ -224,14 +224,14 @@ function init() {
         categoryLabel.appendChild(enLabel);
         categoryLabel.appendChild(jaLabel);
         
-        const dishesRow = document.createElement('div');
-        dishesRow.className = 'dishes-row';
-        
         // 「クリア」ボタン
         const clearButton = document.createElement('button');
-        clearButton.className = 'dish-button clear-button';
+        clearButton.className = 'clear-button';
         clearButton.textContent = 'クリア';
         clearButton.title = 'すべての選択を解除';
+        
+        const dishesRow = document.createElement('div');
+        dishesRow.className = 'dishes-row';
         
         clearButton.addEventListener('click', () => {
             selectedDishes[category] = [];
@@ -242,7 +242,6 @@ function init() {
             saveToLocalStorage();
             updateNutrition();
         });
-        dishesRow.appendChild(clearButton);
 
         // CSV料理ボタン
         dishes.forEach(dish => {
@@ -254,6 +253,9 @@ function init() {
             
             dishesRow.appendChild(button);
         });
+        
+        // 中央に来たdishを大きく表示する機能
+        setupDishCenterObserver(dishesRow);
 
         // // 「追加」ボタン
         // const addButton = document.createElement('button');
@@ -263,10 +265,11 @@ function init() {
         //     currentCategory = category;
         //     openAddDishModal(category);
         // });
-        // dishesRow.appendChild(addButton);
         
         categoryRow.appendChild(categoryLabel);
+        categoryRow.appendChild(clearButton);
         categoryRow.appendChild(dishesRow);
+        // categoryRow.appendChild(addButton);
         container.appendChild(categoryRow);
         
         // カテゴリ間に矢印を追加（最後のカテゴリ以外）
@@ -308,13 +311,14 @@ function createDishButton(dish, category, dishesRow) {
         img.style.display = 'none';
         const emoji = document.createElement('span');
         emoji.textContent = '🍽️';
-        emoji.style.fontSize = '32px';
-        emoji.style.width = '60px';
-        emoji.style.height = '60px';
+        emoji.style.fontSize = '40px';
+        emoji.style.width = '100%';
+        emoji.style.height = '80px';
         emoji.style.display = 'flex';
         emoji.style.alignItems = 'center';
         emoji.style.justifyContent = 'center';
         emoji.style.flexShrink = '0';
+        emoji.style.borderRadius = '8px';
         button.insertBefore(emoji, button.firstChild);
     };
     
@@ -373,6 +377,7 @@ function createDishButton(dish, category, dishesRow) {
     labelContainer.appendChild(label);
     labelContainer.appendChild(pfcInfo);
     
+    // 画像を上に、名前とPFCを下に配置
     button.appendChild(img);
     button.appendChild(labelContainer);
     
@@ -1136,6 +1141,42 @@ function updatePfcLabel(elementId, percent) {
     } else {
         element.style.display = 'none';
     }
+}
+
+// ==================== 中央dish拡大機能 ====================
+
+function setupDishCenterObserver(dishesRow) {
+    const dishes = dishesRow.querySelectorAll('.dish-button:not(.clear-button):not(.add-button)');
+    
+    if (dishes.length === 0) return;
+    
+    // スクロールイベントで中央のdishを検出
+    const updateCenterFocus = () => {
+        const containerRect = dishesRow.getBoundingClientRect();
+        const centerX = containerRect.left + containerRect.width / 2;
+        
+        dishes.forEach(dish => {
+            const rect = dish.getBoundingClientRect();
+            const elementCenterX = rect.left + rect.width / 2;
+            const distance = Math.abs(elementCenterX - centerX);
+            
+            // 中央から最も近いdishを拡大
+            if (distance < 60) {
+                dish.classList.add('center-focused');
+            } else {
+                dish.classList.remove('center-focused');
+            }
+        });
+    };
+    
+    // 初期状態でも中央のdishを検出
+    updateCenterFocus();
+    
+    // スクロールイベントで更新
+    dishesRow.addEventListener('scroll', updateCenterFocus, { passive: true });
+    
+    // リサイズ時も更新
+    window.addEventListener('resize', updateCenterFocus);
 }
 
 // ==================== ページロード ====================
