@@ -1297,11 +1297,71 @@ function setupFixedPfcBarVisibility() {
     observer.observe(resultContainer);
 }
 
+// ==================== 画像カルーセル ====================
+
+function initImageCarousel() {
+    const carousel = document.getElementById('imageCarousel');
+    if (!carousel) return;
+    
+    // 画像ファイルのリスト（next.png以外）
+    const imageFiles = [
+        'fifteen_grain_rice.jpg',
+        'fragrant_onion_dressing.jpg',
+        'half.jpg',
+        'home_brew_sesame_dressing.jpg',
+        'hot_spring_egg.jpg',
+        'maple_nuts_and_pumpkin_gourmet_salad.jpg',
+        'mix_salad.jpg',
+        'okra_and_long_yam_neranner_sesame_dressing.jpg',
+        'salt_kelp_and_roasted_carrot_lap.jpg',
+        'salt_kelp_poached_egg.jpg',
+        'salt_kelp_roasted_chicken.jpg',
+        'sliced_radish_kimchi_and_korean_dressing.jpg',
+        'soft_chicken_ginger_roast.jpg',
+        'soft_sea_urchin_tamago.jpg',
+        'spice_curry.jpg',
+        'spicy_lachacha_dressing.jpg',
+        'spicy_malaxi_spring_rain.jpg',
+        'tara_vinegar_anakake.jpg',
+        'teriyaki_pork_hamburger.jpg',
+        'three_mushroom_ancho_marinade.jpg'
+    ];
+    
+    const container = document.createElement('div');
+    container.className = 'image-carousel-container';
+    
+    // CSS変数で画像数を設定
+    container.style.setProperty('--image-count', imageFiles.length);
+    
+    // 画像を2セット作成して無限ループを実現
+    for (let i = 0; i < 2; i++) {
+        imageFiles.forEach(imageFile => {
+            const item = document.createElement('div');
+            item.className = 'image-carousel-item';
+            
+            const img = document.createElement('img');
+            img.src = `images/${imageFile}`;
+            img.alt = imageFile.replace('.jpg', '').replace(/_/g, ' ');
+            img.onerror = function() {
+                item.style.display = 'none';
+            };
+            
+            item.appendChild(img);
+            container.appendChild(item);
+        });
+    }
+    
+    carousel.appendChild(container);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Page load started');
     
     // ハンバーガーメニューの設定
     setupHamburgerMenu();
+    
+    // 画像カルーセルの初期化
+    initImageCarousel();
     
     // Google Sheetsから読み込み
     await loadFromGoogleSheets();
