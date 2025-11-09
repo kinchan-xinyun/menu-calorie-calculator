@@ -5,17 +5,17 @@
 }
 
 :root {
-    --primary-green: #1a8c5e;
-    --dark-green: #157a4f;
+    --primary-green: #2E8B57;
+    --dark-green: #1F6F50;
     --accent-yellow: #FFD93D;
-    --soft-yellow: #fff8e8;
+    --soft-yellow: #F4EAD5;
     --protein: #e85d5d;
     --fat: #f4a261;
     --carbs: #52b788;
-    --bg-light: #faf9f5;
-    --text-dark: #1a1a1a;
+    --bg-light: #F4EAD5;
+    --text-dark: #181818;
     --text-light: #6b7280;
-    --border: #e5e7eb;
+    --border: #ecbf66;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
@@ -540,20 +540,114 @@ body {
     flex-shrink: 0;
 }
 
+.dish-button-label-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    padding-left: 20px;
+    padding-right: 10px;
+}
+
 .dish-button-label {
     font-family: "Kaisei Decol", serif;
     font-weight: 900;
     font-size: 14px;
     text-align: left;
     line-height: 1.4;
-    padding-left: 20px;
-    padding-right: 10px;
-    flex: 1;
+}
+
+.dish-button-pfc {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-wrap: wrap;
+}
+
+.pfc-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: "Kaisei Decol", serif;
+}
+
+.pfc-icon {
+    font-family: "Yusei Magic", sans-serif;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+
+.pfc-value {
+    font-family: "Yusei Magic", sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.pfc-item.protein-item .pfc-icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--protein);
+}
+
+.pfc-item.protein-item .pfc-value {
+    color: var(--protein);
+}
+
+.pfc-item.fat-item .pfc-icon {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--fat);
+}
+
+.pfc-item.fat-item .pfc-value {
+    color: var(--fat);
+}
+
+.pfc-item.carbs-item .pfc-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--carbs);
+}
+
+.pfc-item.carbs-item .pfc-value {
+    color: var(--carbs);
 }
 
 .dish-button.selected {
-    background: linear-gradient(135deg, #c1e386 10%, var(--primary-green) 90%);
-    color: white;
+    background: #f1d3b4;
+    color: var(--text-dark);
+}
+
+.dish-button.selected .pfc-item.protein-item .pfc-icon {
+    background: rgba(239, 68, 68, 0.2);
+    color: #c53030;
+}
+
+.dish-button.selected .pfc-item.protein-item .pfc-value {
+    color: #c53030;
+}
+
+.dish-button.selected .pfc-item.fat-item .pfc-icon {
+    background: rgba(251, 191, 36, 0.2);
+    color: #b45309;
+}
+
+.dish-button.selected .pfc-item.fat-item .pfc-value {
+    color: #b45309;
+}
+
+.dish-button.selected .pfc-item.carbs-item .pfc-icon {
+    background: rgba(34, 197, 94, 0.2);
+    color: #15803d;
+}
+
+.dish-button.selected .pfc-item.carbs-item .pfc-value {
+    color: #15803d;
 }
 
 .dish-button.none-button {
@@ -563,9 +657,36 @@ body {
 }
 
 .dish-button.none-button.selected {
-    background: linear-gradient(135deg, #c1e386 10%, var(--primary-green) 90%);
-    color: white;
-    border-bottom-color: rgba(255, 255, 255, 0.2);
+    background: #d4e8c4;
+    color: var(--text-dark);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.dish-button.none-button.selected .pfc-item.protein-item .pfc-icon {
+    background: rgba(239, 68, 68, 0.2);
+    color: #c53030;
+}
+
+.dish-button.none-button.selected .pfc-item.protein-item .pfc-value {
+    color: #c53030;
+}
+
+.dish-button.none-button.selected .pfc-item.fat-item .pfc-icon {
+    background: rgba(251, 191, 36, 0.2);
+    color: #b45309;
+}
+
+.dish-button.none-button.selected .pfc-item.fat-item .pfc-value {
+    color: #b45309;
+}
+
+.dish-button.none-button.selected .pfc-item.carbs-item .pfc-icon {
+    background: rgba(34, 197, 94, 0.2);
+    color: #15803d;
+}
+
+.dish-button.none-button.selected .pfc-item.carbs-item .pfc-value {
+    color: #15803d;
 }
 
 /* 販売中止スタイル */

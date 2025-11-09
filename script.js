@@ -318,12 +318,63 @@ function createDishButton(dish, category, dishesRow) {
         button.insertBefore(emoji, button.firstChild);
     };
     
+    const labelContainer = document.createElement('div');
+    labelContainer.className = 'dish-button-label-container';
+    
     const label = document.createElement('div');
     label.className = 'dish-button-label';
     label.textContent = dish.dish;
     
+    // PFC情報を表示
+    const pfcInfo = document.createElement('div');
+    pfcInfo.className = 'dish-button-pfc';
+    
+    const protein = dish.protein || 0;
+    const fat = dish.fat || 0;
+    const carbs = dish.carbs || 0;
+    
+    const proteinItem = document.createElement('div');
+    proteinItem.className = 'pfc-item protein-item';
+    const proteinIcon = document.createElement('span');
+    proteinIcon.className = 'pfc-icon';
+    proteinIcon.textContent = 'P';
+    const proteinValue = document.createElement('span');
+    proteinValue.className = 'pfc-value';
+    proteinValue.textContent = `${protein.toFixed(1)}g`;
+    proteinItem.appendChild(proteinIcon);
+    proteinItem.appendChild(proteinValue);
+    
+    const fatItem = document.createElement('div');
+    fatItem.className = 'pfc-item fat-item';
+    const fatIcon = document.createElement('span');
+    fatIcon.className = 'pfc-icon';
+    fatIcon.textContent = 'F';
+    const fatValue = document.createElement('span');
+    fatValue.className = 'pfc-value';
+    fatValue.textContent = `${fat.toFixed(1)}g`;
+    fatItem.appendChild(fatIcon);
+    fatItem.appendChild(fatValue);
+    
+    const carbsItem = document.createElement('div');
+    carbsItem.className = 'pfc-item carbs-item';
+    const carbsIcon = document.createElement('span');
+    carbsIcon.className = 'pfc-icon';
+    carbsIcon.textContent = 'C';
+    const carbsValue = document.createElement('span');
+    carbsValue.className = 'pfc-value';
+    carbsValue.textContent = `${carbs.toFixed(1)}g`;
+    carbsItem.appendChild(carbsIcon);
+    carbsItem.appendChild(carbsValue);
+    
+    pfcInfo.appendChild(proteinItem);
+    pfcInfo.appendChild(fatItem);
+    pfcInfo.appendChild(carbsItem);
+    
+    labelContainer.appendChild(label);
+    labelContainer.appendChild(pfcInfo);
+    
     button.appendChild(img);
-    button.appendChild(label);
+    button.appendChild(labelContainer);
     
     // ボタンアクション用コンテナ
     const actionContainer = document.createElement('div');
