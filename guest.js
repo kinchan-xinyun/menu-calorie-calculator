@@ -17,7 +17,7 @@ const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWub4dZ
 
 // カテゴリ名のマッピング（日本語 → 英語）
 const categoryNameMap = {
-    '主食': { en: 'RICE', ja: '主食' },
+    '主食': { en: 'RICE/SALAD', ja: '主食' },
     '主菜': { en: 'MAIN', ja: '主菜' },
     '副菜': { en: 'SIDE', ja: '副菜' },
     'ドレッシング': { en: 'DRESSING', ja: 'ドレッシング' },
@@ -32,6 +32,9 @@ const categoryNameMap = {
     'デザート': { en: 'DESSERT', ja: 'デザート' },
     '飲み物': { en: 'DRINK', ja: '飲み物' }
 };
+
+// カテゴリーの順序（フロー図の順序）
+const categoryOrder = ['主食', 'ドレッシング', '主菜', '副菜'];
 
 // カテゴリ名を取得（マッピングがない場合は元の名前を使用）
 function getCategoryNames(category) {
@@ -281,6 +284,51 @@ function init() {
     });
     
     setupModal();
+    initCategoryNavigation();
+    
+    // フロー図を初期化
+    updateCategoryFlow();
+}
+
+function initCategoryNavigation() {
+    const navContainer = document.getElementById('categoryNavigation');
+    if (!navContainer) return;
+    
+    const categories = [...new Set(nutritionData.map(item => item.category))];
+    
+    categories.forEach(category => {
+        const categoryNames = getCategoryNames(category);
+        const navItem = document.createElement('button');
+        navItem.className = 'category-nav-item';
+        navItem.textContent = categoryNames.en;
+        navItem.setAttribute('data-category', category);
+        
+        navItem.addEventListener('click', () => {
+            scrollToCategoryDirect(category);
+        });
+        
+        navContainer.appendChild(navItem);
+    });
+}
+
+function scrollToCategoryDirect(category) {
+    const categoryRow = document.querySelector(`.category-row[data-category="${category}"]`);
+    if (categoryRow) {
+        const header = document.querySelector('.header');
+        const categoryNav = document.getElementById('categoryNavigation');
+        const headerHeight = header ? header.offsetHeight : 100;
+        const navHeight = categoryNav ? categoryNav.offsetHeight : 0;
+        
+        const categoryRect = categoryRow.getBoundingClientRect();
+        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+        
+        const targetScrollY = currentScrollY + categoryRect.top - headerHeight - navHeight - 10;
+        
+        window.scrollTo({
+            top: targetScrollY,
+            behavior: 'smooth'
+        });
+    }
 }
 
 function createDishButton(dish, category, dishesRow) {
@@ -838,10 +886,12 @@ function loadFromLocalStorage() {
 
 function restoreUISelection() {
     Object.entries(selectedDishes).forEach(([category, dishNames]) => {
-        const categoryRow = document.querySelector(`[data-category="${category}"]`);
+        const categoryRow = document.querySelector(`.category-row[data-category="${category}"]`);
         if (!categoryRow) return;
         
         const dishesRow = categoryRow.querySelector('.dishes-row');
+        if (!dishesRow) return;
+        
         const allButtons = dishesRow.querySelectorAll('.dish-button');
         
         allButtons.forEach(btn => {
@@ -882,8 +932,222 @@ function updateNutrition() {
     
     updateNutritionDisplay(totalProtein, totalFat, totalCarbs, totalCalories);
     updatePFCChart(totalProtein, totalFat, totalCarbs);
+    updateCategoryFlow();
     updateSelectedDishesImages();
     updateSelectedDishesList();
+}
+
+function updateCategoryFlow() {
+    const container = document.getElementById('categoryFlow');
+    if (!container) {
+        console.error('categoryFlow container not found');
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    // nutritionDataが空の場合でも、カテゴリー順序に基づいてプレースホルダーを表示
+    let existingCategories = [];
+    if (nutritionData && nutritionData.length > 0) {
+        existingCategories = [...new Set(nutritionData.map(item => item.category))];
+    }
+    
+    // カテゴリーが存在しない場合でも、categoryOrderに基づいてプレースホルダーを表示
+    if (existingCategories.length === 0) {
+        // categoryOrderに基づいてプレースホルダーを表示
+        categoryOrder.forEach((category, index) => {
+            const categoryItem = document.createElement('div');
+            categoryItem.className = 'category-flow-item';
+            categoryItem.setAttribute('data-category', category);
+            
+            const categoryNames = getCategoryNames(category);
+            const categoryLabel = document.createElement('div');
+            categoryLabel.className = 'category-flow-label';
+            categoryLabel.textContent = categoryNames.en;
+            categoryItem.appendChild(categoryLabel);
+            
+            const dishImageContainer = document.createElement('div');
+            dishImageContainer.className = 'category-flow-images';
+            
+            const placeholder = document.createElement('div');
+            placeholder.className = 'category-flow-placeholder';
+            const placeholderImg = document.createElement('img');
+            placeholderImg.src = 'images/unselected-dish.png';
+            placeholderImg.alt = '未選択';
+            placeholderImg.className = 'category-flow-placeholder-image';
+            placeholder.appendChild(placeholderImg);
+            dishImageContainer.appendChild(placeholder);
+            
+            categoryItem.appendChild(dishImageContainer);
+            container.appendChild(categoryItem);
+            
+            if (index < categoryOrder.length - 1) {
+                const arrow = document.createElement('div');
+                arrow.className = 'category-flow-arrow';
+                arrow.textContent = '→';
+                container.appendChild(arrow);
+            }
+        });
+        console.log('Category flow initialized with placeholders');
+        return;
+    }
+    
+    // 除外するカテゴリー
+    const excludedCategories = ['その他', 'DRINK/SOUP', '飲み物', 'スープ', 'デザート'];
+    const isExcludedCategory = (cat) => {
+        if (excludedCategories.includes(cat)) return true;
+        const catNames = getCategoryNames(cat);
+        return excludedCategories.some(excluded => {
+            const excludedNames = getCategoryNames(excluded);
+            return excludedNames.en === catNames.en;
+        });
+    };
+    
+    // カテゴリーを順序に従って並べ替え（categoryOrderに含まれるもののみ）
+    const orderedCategories = [];
+    const categoryOrderMap = {};
+    
+    // categoryOrderの各カテゴリーについて、実際のカテゴリー名をマッピング
+    categoryOrder.forEach(orderCategory => {
+        // 直接一致する場合
+        if (existingCategories.includes(orderCategory) && !isExcludedCategory(orderCategory)) {
+            orderedCategories.push(orderCategory);
+            categoryOrderMap[orderCategory] = orderCategory;
+        } else {
+            // マッピングを確認（例：'主食' → 'ごはん'）
+            const categoryNames = getCategoryNames(orderCategory);
+            const matchingCategory = existingCategories.find(cat => {
+                if (isExcludedCategory(cat)) return false;
+                const catNames = getCategoryNames(cat);
+                return catNames.en === categoryNames.en;
+            });
+            if (matchingCategory) {
+                orderedCategories.push(matchingCategory);
+                categoryOrderMap[matchingCategory] = orderCategory;
+            }
+        }
+    });
+    
+    // 順序に含まれていないカテゴリーも追加（drink/soupとotherは除外）
+    existingCategories.forEach(cat => {
+        if (!orderedCategories.includes(cat) && !isExcludedCategory(cat)) {
+            orderedCategories.push(cat);
+        }
+    });
+    
+    // orderedCategoriesが空の場合は、すべてのカテゴリーを表示（除外カテゴリー以外）
+    if (orderedCategories.length === 0) {
+        existingCategories.forEach(cat => {
+            if (!isExcludedCategory(cat)) {
+                orderedCategories.push(cat);
+            }
+        });
+    }
+    
+    // カテゴリーの順序に従ってフロー図を作成
+    orderedCategories.forEach((category, index) => {
+        // カテゴリーアイテムを作成
+        const categoryItem = document.createElement('div');
+        categoryItem.className = 'category-flow-item';
+        categoryItem.setAttribute('data-category', category);
+        
+        // カテゴリー名を表示
+        const categoryNames = getCategoryNames(category);
+        const categoryLabel = document.createElement('div');
+        categoryLabel.className = 'category-flow-label';
+        categoryLabel.textContent = categoryNames.en;
+        categoryItem.appendChild(categoryLabel);
+        
+        // 選択されたdishの画像を表示
+        const dishImageContainer = document.createElement('div');
+        dishImageContainer.className = 'category-flow-images';
+        
+        if (selectedDishes[category] && selectedDishes[category].length > 0) {
+            // 選択されている場合はhas-selectionクラスを追加
+            categoryItem.classList.add('has-selection');
+            
+            // 選択されたすべてのdishの画像を表示（縦に並べる）
+            selectedDishes[category].forEach((dishName) => {
+                const dishData = nutritionData.find(
+                    item => item.category === category && item.dish === dishName
+                );
+                
+                if (dishData) {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'category-flow-image-wrapper';
+                    imgWrapper.setAttribute('data-dish-name', dishName);
+                    imgWrapper.setAttribute('data-category', category);
+                    
+                    const img = document.createElement('img');
+                    if (dishData.image && dishData.image.startsWith('data:image')) {
+                        img.src = dishData.image;
+                    } else if (dishData.image) {
+                        img.src = dishData.image;
+                    } else {
+                        img.src = `images/${sanitizeFilename(dishData.dish)}.jpg`;
+                    }
+                    img.alt = dishData.dish;
+                    img.className = 'category-flow-image';
+                    img.onerror = function() {
+                        img.style.display = 'none';
+                    };
+                    
+                    // バツボタンを追加
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'category-flow-delete';
+                    deleteButton.innerHTML = '×';
+                    deleteButton.setAttribute('aria-label', '削除');
+                    deleteButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const dishNameToRemove = imgWrapper.getAttribute('data-dish-name');
+                        const categoryToRemove = imgWrapper.getAttribute('data-category');
+                        if (selectedDishes[categoryToRemove]) {
+                            selectedDishes[categoryToRemove] = selectedDishes[categoryToRemove].filter(d => d !== dishNameToRemove);
+                        }
+                        
+                        // メイン画面の対応するdishボタンのselectedクラスを削除
+                        const categoryRow = document.querySelector(`.category-row[data-category="${categoryToRemove}"]`);
+                        if (categoryRow) {
+                            const button = categoryRow.querySelector(`.dish-button[data-dish-name="${dishNameToRemove}"]`);
+                            if (button) {
+                                button.classList.remove('selected');
+                                const selectedIndicator = button.querySelector('.selected-indicator');
+                                if (selectedIndicator) selectedIndicator.style.display = 'none';
+                            }
+                        }
+                        
+                        saveToLocalStorage();
+                        updateNutrition();
+                    });
+                    
+                    imgWrapper.appendChild(img);
+                    imgWrapper.appendChild(deleteButton);
+                    dishImageContainer.appendChild(imgWrapper);
+                }
+            });
+        } else {
+            // 未選択の場合はプレースホルダー画像
+            const placeholder = document.createElement('div');
+            placeholder.className = 'category-flow-placeholder';
+            const placeholderImg = document.createElement('img');
+            placeholderImg.src = 'images/unselected-dish.png';
+            placeholderImg.alt = '未選択';
+            placeholderImg.className = 'category-flow-placeholder-image';
+            placeholder.appendChild(placeholderImg);
+            dishImageContainer.appendChild(placeholder);
+        }
+        
+        categoryItem.appendChild(dishImageContainer);
+        container.appendChild(categoryItem);
+        
+        // 矢印を追加（最後のカテゴリー以外）
+        if (index < orderedCategories.length - 1) {
+            const arrow = document.createElement('div');
+            arrow.className = 'category-flow-arrow';
+            arrow.textContent = '→';
+            container.appendChild(arrow);
+        }
+    });
 }
 
 function updateSelectedDishesImages() {
@@ -1189,6 +1453,10 @@ function setupHamburgerMenu() {
     const menuClose = document.getElementById('menuClose');
     const menuItems = document.getElementById('menuItems');
     
+    if (!hamburgerMenu || !menuOverlay || !menuClose || !menuItems) {
+        return; // hamburger-menuが存在しない場合は何もしない
+    }
+    
     function openMenu() {
         // メニューを開くたびにカテゴリー一覧を更新
         updateMenuItems();
@@ -1277,17 +1545,48 @@ function setupFixedPfcBarVisibility() {
     const fixedPfcBar = document.getElementById('fixedPfcBar');
     const resultContainer = document.getElementById('result-container');
     
-    if (!fixedPfcBar || !resultContainer) return;
+    if (!fixedPfcBar) return;
     
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
+    // 初期状態では表示
+    fixedPfcBar.classList.remove('hidden');
+    
+    if (!resultContainer) return;
+    
+    function updateVisibility() {
+        const resultStyle = window.getComputedStyle(resultContainer);
+        const isResultVisible = resultStyle.display !== 'none';
+        
+        if (isResultVisible) {
+            // result-containerが表示されている場合
+            const rect = resultContainer.getBoundingClientRect();
+            const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+            
+            if (isInViewport) {
                 // 栄養情報セクションが表示されている場合は非表示
                 fixedPfcBar.classList.add('hidden');
             } else {
-                // 栄養情報セクションが表示されていない場合は表示
-                fixedPfcBar.classList.remove('hidden');
+                // ページの一番下にスクロールした場合も非表示
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+                const isAtBottom = (scrollTop + windowHeight) >= documentHeight - 50;
+                
+                if (isAtBottom) {
+                    fixedPfcBar.classList.add('hidden');
+                } else {
+                    fixedPfcBar.classList.remove('hidden');
+                }
             }
+        } else {
+            // result-containerが非表示の場合は表示
+            fixedPfcBar.classList.remove('hidden');
+        }
+    }
+    
+    // IntersectionObserverでresult-containerの表示状態を監視
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            updateVisibility();
         });
     }, {
         threshold: 0.1,
@@ -1295,6 +1594,9 @@ function setupFixedPfcBarVisibility() {
     });
     
     observer.observe(resultContainer);
+    
+    // スクロールイベントでも更新
+    window.addEventListener('scroll', updateVisibility, { passive: true });
 }
 
 // ==================== 画像カルーセル ====================
@@ -1379,4 +1681,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 固定PFCバランスの表示制御を設定
     setupFixedPfcBarVisibility();
+    
+    // フロー図を初期化（nutritionDataが読み込まれた後）
+    // 少し遅延を入れて確実に表示されるようにする
+    setTimeout(() => {
+        updateCategoryFlow();
+        
+        // fixed-pfc-barがhiddenになっていないか確認
+        const fixedPfcBar = document.getElementById('fixedPfcBar');
+        if (fixedPfcBar) {
+            fixedPfcBar.classList.remove('hidden');
+        }
+    }, 100);
 });

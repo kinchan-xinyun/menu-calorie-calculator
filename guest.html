@@ -13,12 +13,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <button class="hamburger-menu" id="hamburgerMenu" aria-label="メニュー">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-    
     <div class="menu-overlay" id="menuOverlay">
         <div class="menu-content">
             <div class="menu-header">
@@ -34,6 +28,10 @@
     <div class="container">
         <div class="header">
             <img src="images/one_plate.jpg" alt="MY TEISHOKU ONEPLATE" class="header-logo">
+        </div>
+        
+        <div id="categoryNavigation" class="category-navigation">
+            <!-- カテゴリー一覧がここに動的に追加されます -->
         </div>
 
         <div class="image-carousel" id="imageCarousel">
@@ -81,7 +79,7 @@
                 </div>
 
                 <div class="pfc-section">
-                    <h3>⚖️ PFCバランス</h3>
+                    <h3>PFCバランス</h3>
                     
                     <div class="pfc-chart">
                         <div class="pfc-bar-container">
@@ -142,6 +140,7 @@
     <!-- 固定表示のPFCバランス -->
     <div id="fixedPfcBar" class="fixed-pfc-bar">
         <div class="fixed-pfc-content">
+            <div id="categoryFlow" class="category-flow"></div>
             <div id="selectedDishesImages" class="selected-dishes-images"></div>
             <div class="fixed-pfc-bar-container">
                 <div class="fixed-pfc-bar-inner" id="fixed-pfc-bar">
