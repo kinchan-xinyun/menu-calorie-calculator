@@ -5,17 +5,17 @@
 }
 
 :root {
-    --primary-green: #2E8B57;
-    --dark-green: #1F6F50;
-    --accent-yellow: #FFD93D;
-    --soft-yellow: #f4f0d5;
-    --protein: #e85d5d;
-    --fat: #f4a261;
-    --carbs: #52b788;
+    --primary-green: #7aa802;
+    --dark-green: #258039;
+    --accent-yellow: #f2c057;
+    --soft-yellow: #ffdb94;
+    --protein: #cf3721;
+    --fat: #ee693f;
+    --carbs: #739f3d;
     --bg-light: #F4EAD5;
     --text-dark: #181818;
     --text-light: #6b7280;
-    --border: #ecbf66;
+    --border: #f5be41;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
@@ -202,7 +202,7 @@ body {
 
 /* ヘッダー */
 .header {
-    background: linear-gradient(135deg, var(--accent-yellow) 0%, #FFD93D 100%);
+    background: #FFD93D;
     text-align: center;
     position: sticky;
     top: 0;
@@ -535,7 +535,7 @@ body {
     color: var(--dark-green);
     display: block;
     text-align: center;
-    border-bottom: 3px solid var(--fat);
+    border-bottom: 3px solid #ee693f;
 }
 
 .category-label-ja {
@@ -620,6 +620,12 @@ body {
     margin-left: 10px;
 }
 
+.dish-button.selected .dish-button-label-container {
+    background: #ffccac;
+    color: var(--text-dark);
+    box-shadow: none;
+}
+
 .dish-button-label {
     font-family: "Kaisei Decol", serif;
     font-weight: 900;
@@ -694,9 +700,9 @@ body {
 }
 
 .dish-button.selected {
-    background: #f1d3b4;
+    background: #ffccac;
     color: var(--text-dark);
-    border: 2px solid var(--fat);
+    border: 2px solid #fd974f;
 }
 
 .dish-button.center-focused {
@@ -849,9 +855,9 @@ body {
     font-family: "Yusei Magic", sans-serif;
     font-weight: 900;
     padding: 10px 16px;
-    border: 2px solid #fbbf24;
+    border: 2px solid var(--border);
     border-radius: 12px;
-    background: #fef3c7;
+    background: var(--soft-yellow);
     color: #92400e;
     font-size: 14px;
     cursor: pointer;
@@ -876,9 +882,9 @@ body {
     font-family: "Yusei Magic", sans-serif;
     font-weight: 900;
     padding: 10px 16px;
-    border: 2px solid #fbbf24;
+    border: 2px solid var(--border);
     border-radius: 12px;
-    background: #fef3c7;
+    background:var(--soft-yellow);
     color: #92400e;
     font-size: 14px;
     cursor: pointer;
@@ -927,9 +933,9 @@ body {
     font-family: 'Yusei Magic', sans-serif;
     color: var(--text-dark);
     margin-bottom: 16px;
-    font-size: 28px;
+    font-size: 18px;
     font-weight: 700;
-    border-left: 4px solid var(--primary-green);
+    border-left: 4px solid #ee693f;
     padding-left: 10px;
 }
 
@@ -985,7 +991,7 @@ body {
     background: #f9fafb;
     padding: 16px;
     border-radius: 12px;
-    border-left: 4px solid var(--primary-green);
+    border-left: 4px solid #ee693f;
 }
 
 .pfc-detail-item {
@@ -1074,9 +1080,9 @@ body {
     right: 0;
     z-index: 98;
     background: white;
-    border-top: 2px solid var(--border);
+    border-top: 2px dashed var(--border);
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
-    padding: 12px 16px;
+    padding: 5px 10px;
     transition: transform 0.3s ease;
     transform: translateY(0);
 }
