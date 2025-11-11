@@ -247,6 +247,7 @@ function init() {
         });
 
         // CSV料理ボタン
+        const dishButtons = [];
         dishes.forEach(dish => {
             const button = createDishButton(dish, category, dishesRow);
             
@@ -255,11 +256,9 @@ function init() {
             }
             
             dishesRow.appendChild(button);
+            dishButtons.push(button);
         });
         
-        // 中央に来たdishを大きく表示する機能
-        setupDishCenterObserver(dishesRow);
-
         // 「追加」ボタン
         const addButton = document.createElement('button');
         addButton.className = 'add-button';
@@ -274,6 +273,18 @@ function init() {
         categoryRow.appendChild(dishesRow);
         categoryRow.appendChild(addButton);
         container.appendChild(categoryRow);
+        
+        // 無限ループとインジケーターを設定（categoryRowに追加された後）
+        // 注意: setupDishIndicatorはsetupInfiniteScrollの前に呼ぶ（複製が追加される前）
+        if (dishButtons.length > 0) {
+            setupDishIndicator(dishesRow, dishButtons, category);
+        }
+        if (dishButtons.length > 1) {
+            setupInfiniteScroll(dishesRow, dishButtons, category);
+        }
+        
+        // 中央に来たdishを大きく表示する機能
+        setupDishCenterObserver(dishesRow);
         
         // カテゴリ間に矢印を追加（最後のカテゴリ以外）
         if (index < categories.length - 1) {
@@ -1522,6 +1533,181 @@ function setupDishCenterObserver(dishesRow) {
     
     // リサイズ時も更新
     window.addEventListener('resize', updateCenterFocus);
+}
+
+function setupInfiniteScroll(dishesRow, dishButtons, category) {
+    if (dishButtons.length <= 1) return; // 1個以下なら無限ループ不要
+    
+    let isScrolling = false;
+    let scrollTimeout = null;
+    
+    // 最初と最後のdishを複製
+    const firstButton = dishButtons[0];
+    const lastButton = dishButtons[dishButtons.length - 1];
+    
+    const firstClone = firstButton.cloneNode(true);
+    firstClone.classList.add('clone');
+    firstClone.setAttribute('data-clone', 'first');
+    const lastClone = lastButton.cloneNode(true);
+    lastClone.classList.add('clone');
+    lastClone.setAttribute('data-clone', 'last');
+    
+    // 最初の前に最後の複製、最後の後に最初の複製を追加
+    dishesRow.insertBefore(lastClone, firstButton);
+    dishesRow.appendChild(firstClone);
+    
+    // 最初の実物の位置にスクロール
+    const scrollToFirst = () => {
+        if (firstButton) {
+            const buttonWidth = firstButton.offsetWidth;
+            const padding = (dishesRow.offsetWidth / 2 - buttonWidth / 2);
+            const firstButtonLeft = firstButton.offsetLeft;
+            dishesRow.scrollLeft = firstButtonLeft - padding;
+        }
+    };
+    
+    // 初期位置を設定（最初の実物の位置）
+    setTimeout(() => {
+        scrollToFirst();
+    }, 200);
+    
+    // スクロールイベントで無限ループを実現
+    dishesRow.addEventListener('scroll', () => {
+        if (isScrolling) return;
+        
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            const scrollLeft = dishesRow.scrollLeft;
+            const scrollWidth = dishesRow.scrollWidth;
+            const clientWidth = dishesRow.clientWidth;
+            const buttonWidth = firstButton.offsetWidth;
+            const padding = (dishesRow.offsetWidth / 2 - buttonWidth / 2);
+            const firstButtonLeft = firstButton.offsetLeft;
+            const lastButtonLeft = lastButton.offsetLeft;
+            
+            // 最後の複製に到達したら、最初の実物に戻す
+            if (scrollLeft >= scrollWidth - clientWidth - 20) {
+                isScrolling = true;
+                dishesRow.scrollLeft = firstButtonLeft - padding;
+                setTimeout(() => {
+                    isScrolling = false;
+                }, 100);
+            }
+            // 最初の複製に到達したら、最後の実物に戻す
+            else if (scrollLeft <= 20) {
+                isScrolling = true;
+                dishesRow.scrollLeft = lastButtonLeft - padding;
+                setTimeout(() => {
+                    isScrolling = false;
+                }, 100);
+            }
+        }, 50);
+    }, { passive: true });
+}
+
+function setupDishIndicator(dishesRow, dishButtons, category) {
+    // 実物のdishボタンのみを取得（複製を除外）
+    const realButtons = dishButtons.filter(button => !button.classList.contains('clone'));
+    
+    if (realButtons.length === 0) {
+        console.log('setupDishIndicator: No real buttons found for category:', category);
+        return; // 実物のボタンがない場合は何もしない
+    }
+    
+    // インジケーターコンテナを作成
+    const indicator = document.createElement('div');
+    indicator.className = 'dish-indicator';
+    indicator.setAttribute('data-category', category);
+    
+    // 各dish用のドットを作成
+    realButtons.forEach((button, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'dish-indicator-dot';
+        dot.setAttribute('data-index', index);
+        indicator.appendChild(dot);
+    });
+    
+    
+    // dishesRowの親要素（categoryRow）にインジケーターを追加
+    const categoryRow = dishesRow.closest('.category-row');
+    if (!categoryRow) {
+        console.error('setupDishIndicator: categoryRow not found for category:', category);
+        // categoryRowが見つからない場合は、dishesRowの親要素に直接追加
+        if (dishesRow.parentNode) {
+            dishesRow.parentNode.insertBefore(indicator, dishesRow.nextSibling);
+            console.log('setupDishIndicator: Inserted indicator to parentNode');
+        }
+        return;
+    }
+    
+    // dishesRowの直後にインジケーターを挿入（addButtonの前）
+    const addButton = categoryRow.querySelector('.add-button');
+    if (addButton) {
+        categoryRow.insertBefore(indicator, addButton);
+    } else {
+        // addButtonがない場合は、dishesRowの直後に追加
+        dishesRow.insertAdjacentElement('afterend', indicator);
+    }
+    
+    
+    // 現在の位置を更新する関数
+    const updateIndicator = () => {
+        // 実物のdishボタンを再取得（複製が追加された後でも正しく動作するように）
+        const currentRealButtons = Array.from(dishesRow.querySelectorAll('.dish-button')).filter(
+            button => !button.classList.contains('clone')
+        );
+        
+        if (currentRealButtons.length === 0) return;
+        
+        const containerRect = dishesRow.getBoundingClientRect();
+        const centerX = containerRect.left + containerRect.width / 2;
+        
+        let activeIndex = 0;
+        let minDistance = Infinity;
+        
+        // 実物のdishボタンのみをチェック
+        currentRealButtons.forEach((button, index) => {
+            const rect = button.getBoundingClientRect();
+            const elementCenterX = rect.left + rect.width / 2;
+            const distance = Math.abs(elementCenterX - centerX);
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                activeIndex = index;
+            }
+        });
+        
+        // アクティブなドットを更新
+        const dots = indicator.querySelectorAll('.dish-indicator-dot');
+        if (dots.length > activeIndex) {
+            dots.forEach((dot, index) => {
+                if (index === activeIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+    };
+    
+    // スクロールイベントで更新
+    dishesRow.addEventListener('scroll', updateIndicator, { passive: true });
+    
+    // 初期状態も更新（複数回試行して確実に表示されるように）
+    setTimeout(updateIndicator, 100);
+    setTimeout(updateIndicator, 300);
+    setTimeout(updateIndicator, 500);
+    
+    // リサイズ時も更新
+    window.addEventListener('resize', updateIndicator);
+    
+    // インジケーターの表示を確認
+    setTimeout(() => {
+        const computedStyle = window.getComputedStyle(indicator);
+        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+            console.error('setupDishIndicator: Indicator is hidden by CSS!');
+        }
+    }, 200);
 }
 
 // ==================== ページロード ====================

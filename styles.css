@@ -627,6 +627,40 @@ body {
     display: none;
 }
 
+.dish-indicator {
+    display: flex !important;
+    visibility: visible !important;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0 4px 0;
+    margin-top: -10px;
+    margin-bottom: 4px;
+    width: 100%;
+    min-height: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.dish-indicator-dot {
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #ccc !important;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.dish-indicator-dot.active {
+    background: #333 !important;
+    width: 8px !important;
+    height: 8px !important;
+}
+
 .dish-button {
     padding: 12px;
     /* margin-right: 20px; */
