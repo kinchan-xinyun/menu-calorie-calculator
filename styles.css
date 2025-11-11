@@ -207,9 +207,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    height: 100px;
-    padding-top: 20px;
+    height: 80px;
+    padding-top:10px;
 }
 
 .header-logo {
@@ -226,14 +225,14 @@ body {
     align-items: center;
     gap: 8px;
     max-width: 100%;
-    padding: 12px 0;
-    background: white;
+    /* padding: 12px 0; */
+    background: #FFD93D;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
     position: sticky;
-    top: 100px;
+    top: 78px;
     z-index: 99;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -247,16 +246,37 @@ body {
     font-size: 12px;
     font-weight: 700;
     padding: 3px 4px;
-    background: white;
+    background: #FFD93D;
     border-right: none;
     border-left: none;
     border-top: none;
-    border-bottom: 2px solid var(--border);
+    border-bottom: 2px solid var(--fat);
     color: var(--text-dark);
     cursor: pointer;
     transition: all 0.2s;
     flex-shrink: 0;
     touch-action: manipulation;
+}
+
+
+
+.category-nav-item:hover:not(.active) {
+    background: var(--soft-yellow);
+    margin-bottom: 2px;
+    background-color: whitesmoke;
+    border-bottom: 2px solid whitesmoke;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.category-nav-item.active {
+    background: white !important;
+    background-color: white !important;
+    color: var(--text-dark) !important;
+    border-bottom: 2px solid white !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    margin-bottom: 2px !important;
 }
 
 /* 画像カルーセル */
@@ -598,7 +618,7 @@ body {
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 40px calc(50% - 60px) 40px calc(50% - 60px);
+    padding: 35px calc(50% - 60px) 35px calc(50% - 60px);
     scroll-padding: 0 calc(50% - 60px);
     scroll-snap-type: x proximity;
 }
@@ -609,7 +629,7 @@ body {
 
 .dish-button {
     padding: 12px;
-    margin-right: 20px;
+    /* margin-right: 20px; */
     border: 2px solid transparent;
     border-radius: 12px;
     background: transparent;
@@ -619,7 +639,6 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
-    /* box-shadow: var(--shadow); */
     display: flex;
     flex-direction: column;
     align-items: center;

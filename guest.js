@@ -304,11 +304,92 @@ function initCategoryNavigation() {
         navItem.setAttribute('data-category', category);
         
         navItem.addEventListener('click', () => {
+            // すべてのnav-itemからactiveクラスを削除
+            navContainer.querySelectorAll('.category-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            // クリックされたitemにactiveクラスを追加
+            navItem.classList.add('active');
             scrollToCategoryDirect(category);
         });
         
         navContainer.appendChild(navItem);
     });
+    
+    // カテゴリーのスクロール監視を設定
+    setupCategoryScrollObserver();
+}
+
+function setupCategoryScrollObserver() {
+    const categoryRows = document.querySelectorAll('.category-row');
+    const navContainer = document.getElementById('categoryNavigation');
+    if (!navContainer || categoryRows.length === 0) return;
+    
+    // 各カテゴリーのナビゲーションアイテムを取得
+    const navItems = {};
+    navContainer.querySelectorAll('.category-nav-item').forEach(item => {
+        const category = item.getAttribute('data-category');
+        navItems[category] = item;
+    });
+    
+    const header = document.querySelector('.header');
+    const categoryNav = document.getElementById('categoryNavigation');
+    const headerHeight = header ? header.offsetHeight : 100;
+    const navHeight = categoryNav ? categoryNav.offsetHeight : 0;
+    
+    function updateActiveCategory() {
+        const thresholdTop = headerHeight + navHeight + 100; // ヘッダーとナビゲーションの下
+        
+        let activeCategory = null;
+        let minDistance = Infinity;
+        
+        // 各カテゴリーをチェックして、画面内に入っている最初のカテゴリーを探す
+        categoryRows.forEach(row => {
+            const rect = row.getBoundingClientRect();
+            const category = row.getAttribute('data-category');
+            
+            // カテゴリーが画面内に入っているかチェック（上部がthresholdTopより下で、下部が画面内にある）
+            if (rect.top <= thresholdTop && rect.bottom > thresholdTop) {
+                const distance = Math.abs(rect.top - thresholdTop);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    activeCategory = category;
+                }
+            }
+        });
+        
+        // アクティブなカテゴリーのナビゲーションアイテムを更新
+        if (activeCategory && navItems[activeCategory]) {
+            // すべてのnav-itemからactiveクラスを削除
+            navContainer.querySelectorAll('.category-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            // アクティブなカテゴリーのnav-itemにactiveクラスを追加
+            navItems[activeCategory].classList.add('active');
+        }
+    }
+    
+    // IntersectionObserverのオプション
+    const options = {
+        root: null,
+        rootMargin: `-${headerHeight + navHeight + 100}px 0px -50% 0px`,
+        threshold: [0, 0.1, 0.5, 1]
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        updateActiveCategory();
+    }, options);
+    
+    // 各カテゴリーを監視
+    categoryRows.forEach(row => {
+        observer.observe(row);
+    });
+    
+    // スクロールイベントでも更新（IntersectionObserverだけでは不十分な場合がある）
+    window.addEventListener('scroll', updateActiveCategory, { passive: true });
+    
+    // 初期状態も更新
+    updateActiveCategory();
 }
 
 function scrollToCategoryDirect(category) {
