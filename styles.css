@@ -1252,6 +1252,7 @@ body {
 
 .pfc-detail-kcal {
     font-family: "Montserrat", sans-serif;
+    font-weight: 500;
     color: var(--text-light);
     font-size: 14px;
     min-width: 35px;
