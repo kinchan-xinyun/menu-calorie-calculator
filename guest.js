@@ -443,7 +443,7 @@ function createDishButton(dish, category, dishesRow) {
     } else if (dish.image) {
         img.src = dish.image; // パスを使用
     } else {
-        img.src = `images/${sanitizeFilename(dish.dish)}.jpg`;
+        img.src = `images/${sanitizeFilename(dish.dish)}.png`;
     }
     
     img.alt = dish.dish;
@@ -1176,7 +1176,7 @@ function updateCategoryFlow() {
                     } else if (dishData.image) {
                         img.src = dishData.image;
                     } else {
-                        img.src = `images/${sanitizeFilename(dishData.dish)}.jpg`;
+                        img.src = `images/${sanitizeFilename(dishData.dish)}.png`;
                     }
                     img.alt = dishData.dish;
                     img.className = 'category-flow-image';
@@ -1267,7 +1267,7 @@ function updateSelectedDishesImages() {
         } else if (dish.image) {
             img.src = dish.image;
         } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.jpg`;
+            img.src = `images/${sanitizeFilename(dish.dish)}.png`;
         }
         
         img.alt = dish.dish;
@@ -1375,7 +1375,7 @@ function updateSelectedDishesList() {
         } else if (dish.image) {
             img.src = dish.image;
         } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.jpg`;
+            img.src = `images/${sanitizeFilename(dish.dish)}.png`;
         }
         
         img.alt = dish.dish;
@@ -1874,26 +1874,26 @@ function initImageCarousel() {
     
     // 画像ファイルのリスト（next.png以外）
     const imageFiles = [
-        'fifteen_grain_rice.jpg',
-        'fragrant_onion_dressing.jpg',
-        'half.jpg',
-        'home_brew_sesame_dressing.jpg',
-        'hot_spring_egg.jpg',
-        'maple_nuts_and_pumpkin_gourmet_salad.jpg',
-        'mix_salad.jpg',
-        'okra_and_long_yam_neranner_sesame_dressing.jpg',
-        'salt_kelp_and_roasted_carrot_lap.jpg',
-        'salt_kelp_poached_egg.jpg',
-        'salt_kelp_roasted_chicken.jpg',
-        'sliced_radish_kimchi_and_korean_dressing.jpg',
-        'soft_chicken_ginger_roast.jpg',
-        'soft_sea_urchin_tamago.jpg',
-        'spice_curry.jpg',
-        'spicy_lachacha_dressing.jpg',
-        'spicy_malaxi_spring_rain.jpg',
-        'tara_vinegar_anakake.jpg',
-        'teriyaki_pork_hamburger.jpg',
-        'three_mushroom_ancho_marinade.jpg'
+        'fifteen_grain_rice.png',
+        'fragrant_onion_dressing.png',
+        'half.png',
+        'home_brew_sesame_dressing.png',
+        'hot_spring_egg.png',
+        'maple_nuts_and_pumpkin_gourmet_salad.png',
+        'mix_salad.png',
+        'okra_and_long_yam_neranner_sesame_dressing.png',
+        'salt_kelp_and_roasted_carrot_lap.png',
+        'salt_kelp_poached_egg.png',
+        'salt_kelp_roasted_chicken.png',
+        'sliced_radish_kimchi_and_korean_dressing.png',
+        'soft_chicken_ginger_roast.png',
+        'soft_sea_urchin_tamago.png',
+        'spice_curry.png',
+        'spicy_lachacha_dressing.png',
+        'spicy_malaxi_spring_rain.png',
+        'tara_vinegar_anakake.png',
+        'teriyaki_pork_hamburger.png',
+        'three_mushroom_ancho_marinade.png'
     ];
     
     const container = document.createElement('div');
@@ -1910,7 +1910,7 @@ function initImageCarousel() {
             
             const img = document.createElement('img');
             img.src = `images/${imageFile}`;
-            img.alt = imageFile.replace('.jpg', '').replace(/_/g, ' ');
+            img.alt = imageFile.replace('.png', '').replace(/_/g, ' ');
             img.onerror = function() {
                 item.style.display = 'none';
             };
