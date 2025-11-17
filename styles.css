@@ -404,7 +404,24 @@ body {
     border-color: var(--carbs);
 }
 
-.nutrition-icon {
+.nutrition-icon-protein {
+    color: var(--protein);
+    font-family: "Montserrat", sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.nutrition-icon-fat {
+    color: var(--fat);
+    font-family: "Montserrat", sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.nutrition-icon-carbs {
+    color: var(--carbs);
     font-family: "Montserrat", sans-serif;
     font-weight: 900;
     font-size: 24px;
@@ -843,7 +860,7 @@ body {
 }
 
 .pfc-item.protein-item .pfc-unit {
-    color: var(--protein);
+    color: var(--text-dark);
 }
 
 .pfc-item.fat-item .pfc-icon {
@@ -856,7 +873,7 @@ body {
 }
 
 .pfc-item.fat-item .pfc-unit {
-    color: var(--fat);
+    color: var(--text-dark);
 }
 
 .pfc-item.carbs-item .pfc-icon {
@@ -869,7 +886,7 @@ body {
 }
 
 .pfc-item.carbs-item .pfc-unit {
-    color: var(--carbs);
+    color: var(--text-dark);
 }
 
 .dish-button.selected {
@@ -894,7 +911,7 @@ body {
 }
 
 .dish-button.selected .pfc-item.protein-item .pfc-unit {
-    color: var(--protein);
+    color: var(--text-dark);
 }
 
 .dish-button.selected .pfc-item.fat-item .pfc-icon {
@@ -907,7 +924,7 @@ body {
 }
 
 .dish-button.selected .pfc-item.fat-item .pfc-unit {
-    color: var(--fat);
+    color: var(--text-dark);
 }
 
 .dish-button.selected .pfc-item.carbs-item .pfc-icon {
@@ -920,7 +937,7 @@ body {
 }
 
 .dish-button.selected .pfc-item.carbs-item .pfc-unit {
-    color: var(--carbs);
+    color: var(--text-dark);
 }
 
 .dish-button.none-button {
@@ -945,7 +962,7 @@ body {
 }
 
 .dish-button.none-button.selected .pfc-item.protein-item .pfc-unit {
-    color: var(--protein);
+    color: var(--text-dark);
 }
 
 .dish-button.none-button.selected .pfc-item.fat-item .pfc-icon {
@@ -958,7 +975,7 @@ body {
 }
 
 .dish-button.none-button.selected .pfc-item.fat-item .pfc-unit {
-    color: var(--fat);
+    color: var(--text-dark);
 }
 
 .dish-button.none-button.selected .pfc-item.carbs-item .pfc-icon {
@@ -971,7 +988,7 @@ body {
 }
 
 .dish-button.none-button.selected .pfc-item.carbs-item .pfc-unit {
-    color: var(--carbs);
+    color: var(--text-dark);
 }
 
 /* 販売中止スタイル */
