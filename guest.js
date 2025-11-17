@@ -617,9 +617,8 @@ function createDishButton(dish, category, dishesRow) {
         
         const isSelected = button.classList.contains('selected');
         
-        // カテゴリー別の選択制限
-        const isSingleSelectCategory = category === '主食' || category === '主菜'; // 主食と主菜は1つだけ
-        const isLimitedSelectCategory = category === '副菜'; // 副菜は2つまで
+        // カテゴリー別の選択制限（主食のみ1つだけ、副菜と主菜は複数選択可能）
+        const isSingleSelectCategory = category === '主食'; // 主食のみ1つだけ
         
         if (isSelected) {
             // 選択を解除
@@ -631,7 +630,7 @@ function createDishButton(dish, category, dishesRow) {
             selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
         } else {
             // 選択を追加
-            // 単一選択カテゴリー（主食、主菜）の場合、他の選択を解除
+            // 単一選択カテゴリー（主食のみ）の場合、他の選択を解除
             if (isSingleSelectCategory) {
                 // 同じカテゴリー内の他のボタンの選択を解除
                 const categoryRow = button.closest('.category-row');
@@ -649,28 +648,6 @@ function createDishButton(dish, category, dishesRow) {
                 }
                 // 選択済みリストをクリア
                 selectedDishes[category] = [];
-            }
-            // 制限付き選択カテゴリー（副菜）の場合、2つまで
-            else if (isLimitedSelectCategory) {
-                if (selectedDishes[category] && selectedDishes[category].length >= 2) {
-                    // 既に2つ選択されている場合は、最初の選択を解除
-                    const categoryRow = button.closest('.category-row');
-                    if (categoryRow) {
-                        const dishesRow = categoryRow.querySelector('.dishes-row');
-                        if (dishesRow) {
-                            const firstSelected = dishesRow.querySelector('.dish-button.selected');
-                            if (firstSelected) {
-                                const firstDishName = firstSelected.getAttribute('data-dish-name');
-                                firstSelected.classList.remove('selected');
-                                const indicator = firstSelected.querySelector('.selected-indicator');
-                                if (indicator) {
-                                    indicator.style.display = 'none';
-                                }
-                                selectedDishes[category] = selectedDishes[category].filter(d => d !== firstDishName);
-                            }
-                        }
-                    }
-                }
             }
             
             button.classList.add('selected');
@@ -1253,20 +1230,13 @@ function updateCategoryFlow() {
         const dishImageContainer = document.createElement('div');
         dishImageContainer.className = 'category-flow-images';
         
-        // 副菜の場合は常に2つのスロットを表示
-        const isSideCategory = category === '副菜';
-        const maxSlots = isSideCategory ? 2 : 1;
-        
         // 選択されたdishのリストを取得
         const selectedDishList = selectedDishes[category] || [];
-        const dishesToShow = selectedDishList.slice(0, maxSlots);
+        const isSideCategory = category === '副菜';
         
-        // スロットを表示（副菜は2つ、その他は1つ）
-        for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
-            const dishName = dishesToShow[slotIndex];
-            
-            if (dishName) {
-                // 選択されている場合は画像を表示
+        if (selectedDishList.length > 0) {
+            // 選択されている場合は、すべてのdishを表示（副菜と主菜は複数選択可能）
+            selectedDishList.forEach(dishName => {
                 const dishData = nutritionData.find(
                     item => item.category === category && item.dish === dishName
                 );
@@ -1325,8 +1295,11 @@ function updateCategoryFlow() {
                     imgWrapper.appendChild(deleteButton);
                     dishImageContainer.appendChild(imgWrapper);
                 }
-            } else {
-                // 未選択のスロットはプレースホルダー画像
+            });
+        } else {
+            // 未選択の場合は初期状態のプレースホルダーを表示（副菜は2つ、主菜は1つ、その他は1つ）
+            const maxSlots = isSideCategory ? 2 : 1;
+            for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
                 const placeholder = document.createElement('div');
                 placeholder.className = 'category-flow-placeholder';
                 const placeholderImg = document.createElement('img');
@@ -1336,14 +1309,6 @@ function updateCategoryFlow() {
                 placeholder.appendChild(placeholderImg);
                 dishImageContainer.appendChild(placeholder);
             }
-        }
-        
-        // 副菜が2つ以上選択されている場合、「+N」バッジを表示
-        if (category === '副菜' && selectedDishList.length > 2) {
-            const moreBadge = document.createElement('div');
-            moreBadge.className = 'category-flow-more';
-            moreBadge.textContent = `+${selectedDishList.length - 2}`;
-            dishImageContainer.appendChild(moreBadge);
         }
         
         categoryItem.appendChild(dishImageContainer);
