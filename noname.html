@@ -33,14 +33,15 @@
             <!-- カテゴリー一覧がここに動的に追加されます -->
         </div>
 
-        <div class="image-carousel" id="imageCarousel">
-            <!-- 画像がここに動的に追加されます -->
+        <div class="header-image">
+            <img src="images/plate-top.png" alt="MY TEISHOKU ONEPLATE" class="header-main-image">
         </div>
         
         <div class="description">
-            <p>あなただけの ONE PLATE</p>
-            <p>簡単にカロリーを計算します</p>
-            <p>上から順に選択してみてください</p>
+            <p>あなたの理想を叶える一皿</p>
+            <p>カロリー計算は全てお任せください</p>
+            <p>上から順にお選びいただくと</p>
+            <p>あなただけの ONE PLATE が完成します。</p>
         </div>
 
         <div class="menu-section">
@@ -149,10 +150,27 @@
             <div id="selectedDishesImages" class="selected-dishes-images"></div>
             <div class="fixed-calories-container">
                 <div class="fixed-calories-display" id="fixed-calories-display">
-                    <div class="fixed-calories-items" id="fixed-calories-items"></div>
-                    <span class="fixed-calories-equals">=</span>
-                    <span class="fixed-calories-value" id="fixed-calories-value">0</span>
-                    <span class="fixed-calories-unit">kcal</span>
+                    <div class="fixed-pfc-values">
+                        <div class="fixed-pfc-item">
+                            <span class="fixed-pfc-label">P</span>
+                            <span class="fixed-pfc-value" id="fixed-protein-value">0</span>
+                            <span class="fixed-pfc-unit">g</span>
+                        </div>
+                        <div class="fixed-pfc-item">
+                            <span class="fixed-pfc-label">F</span>
+                            <span class="fixed-pfc-value" id="fixed-fat-value">0</span>
+                            <span class="fixed-pfc-unit">g</span>
+                        </div>
+                        <div class="fixed-pfc-item">
+                            <span class="fixed-pfc-label">C</span>
+                            <span class="fixed-pfc-value" id="fixed-carbs-value">0</span>
+                            <span class="fixed-pfc-unit">g</span>
+                        </div>
+                    </div>
+                    <div class="fixed-calories-total">
+                        <span class="fixed-calories-value" id="fixed-calories-value">0</span>
+                        <span class="fixed-calories-unit">kcal</span>
+                    </div>
                 </div>
             </div>
         </div>

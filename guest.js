@@ -21,7 +21,7 @@ const categoryNameMap = {
     '主菜': { en: 'MAIN', ja: '主菜' },
     '副菜': { en: 'SIDE', ja: '副菜' },
     'ドレッシング': { en: 'DRESSING', ja: 'ドレッシング' },
-    'その他': { en: 'OTHER', ja: 'その他' },
+    'その他': { en: 'EXTRAS', ja: 'その他' },
     'DRINK/SOUP': { en: 'DRINK/SOUP', ja: 'ドリンク/スープ' },
     // 旧カテゴリ名（互換性のため）
     'ごはん': { en: 'RICE', ja: 'ごはん' },
@@ -34,7 +34,7 @@ const categoryNameMap = {
 };
 
 // カテゴリーの順序（フロー図の順序）
-const categoryOrder = ['主食', 'ドレッシング', '主菜', '副菜'];
+const categoryOrder = ['主食', '副菜', '主菜', 'DRINK/SOUP'];
 
 // カテゴリ名を取得（マッピングがない場合は元の名前を使用）
 function getCategoryNames(category) {
@@ -617,13 +617,67 @@ function createDishButton(dish, category, dishesRow) {
         
         const isSelected = button.classList.contains('selected');
         
+        // カテゴリー別の選択制限
+        const isSingleSelectCategory = category === '主食' || category === '主菜'; // 主食と主菜は1つだけ
+        const isLimitedSelectCategory = category === '副菜'; // 副菜は2つまで
+        
         if (isSelected) {
             // 選択を解除
             button.classList.remove('selected');
+            const selectedIndicator = button.querySelector('.selected-indicator');
+            if (selectedIndicator) {
+                selectedIndicator.style.display = 'none';
+            }
             selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
         } else {
             // 選択を追加
+            // 単一選択カテゴリー（主食、主菜）の場合、他の選択を解除
+            if (isSingleSelectCategory) {
+                // 同じカテゴリー内の他のボタンの選択を解除
+                const categoryRow = button.closest('.category-row');
+                if (categoryRow) {
+                    const dishesRow = categoryRow.querySelector('.dishes-row');
+                    if (dishesRow) {
+                        dishesRow.querySelectorAll('.dish-button.selected').forEach(btn => {
+                            btn.classList.remove('selected');
+                            const indicator = btn.querySelector('.selected-indicator');
+                            if (indicator) {
+                                indicator.style.display = 'none';
+                            }
+                        });
+                    }
+                }
+                // 選択済みリストをクリア
+                selectedDishes[category] = [];
+            }
+            // 制限付き選択カテゴリー（副菜）の場合、2つまで
+            else if (isLimitedSelectCategory) {
+                if (selectedDishes[category] && selectedDishes[category].length >= 2) {
+                    // 既に2つ選択されている場合は、最初の選択を解除
+                    const categoryRow = button.closest('.category-row');
+                    if (categoryRow) {
+                        const dishesRow = categoryRow.querySelector('.dishes-row');
+                        if (dishesRow) {
+                            const firstSelected = dishesRow.querySelector('.dish-button.selected');
+                            if (firstSelected) {
+                                const firstDishName = firstSelected.getAttribute('data-dish-name');
+                                firstSelected.classList.remove('selected');
+                                const indicator = firstSelected.querySelector('.selected-indicator');
+                                if (indicator) {
+                                    indicator.style.display = 'none';
+                                }
+                                selectedDishes[category] = selectedDishes[category].filter(d => d !== firstDishName);
+                            }
+                        }
+                    }
+                }
+            }
+            
             button.classList.add('selected');
+            const selectedIndicator = button.querySelector('.selected-indicator');
+            if (selectedIndicator) {
+                selectedIndicator.style.display = 'block';
+            }
             if (!selectedDishes[category].includes(dish.dish)) {
                 selectedDishes[category].push(dish.dish);
             }
@@ -1105,14 +1159,20 @@ function updateCategoryFlow() {
             const dishImageContainer = document.createElement('div');
             dishImageContainer.className = 'category-flow-images';
             
-            const placeholder = document.createElement('div');
-            placeholder.className = 'category-flow-placeholder';
-            const placeholderImg = document.createElement('img');
-            placeholderImg.src = 'images/unselected-dish.png';
-            placeholderImg.alt = '未選択';
-            placeholderImg.className = 'category-flow-placeholder-image';
-            placeholder.appendChild(placeholderImg);
-            dishImageContainer.appendChild(placeholder);
+            // 副菜の場合は2つのプレースホルダー、その他は1つ
+            const isSideCategory = category === '副菜';
+            const maxSlots = isSideCategory ? 2 : 1;
+            
+            for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'category-flow-placeholder';
+                const placeholderImg = document.createElement('img');
+                placeholderImg.src = 'images/unselected-dish.png';
+                placeholderImg.alt = '未選択';
+                placeholderImg.className = 'category-flow-placeholder-image';
+                placeholder.appendChild(placeholderImg);
+                dishImageContainer.appendChild(placeholder);
+            }
             
             categoryItem.appendChild(dishImageContainer);
             container.appendChild(categoryItem);
@@ -1128,8 +1188,8 @@ function updateCategoryFlow() {
         return;
     }
     
-    // 除外するカテゴリー
-    const excludedCategories = ['その他', 'DRINK/SOUP', '飲み物', 'スープ', 'デザート'];
+    // 除外するカテゴリー（DRINK/SOUPは表示するので除外リストから削除、ドレッシングも除外）
+    const excludedCategories = ['その他', '飲み物', 'スープ', 'デザート', 'ドレッシング'];
     const isExcludedCategory = (cat) => {
         if (excludedCategories.includes(cat)) return true;
         const catNames = getCategoryNames(cat);
@@ -1164,12 +1224,7 @@ function updateCategoryFlow() {
         }
     });
     
-    // 順序に含まれていないカテゴリーも追加（drink/soupとotherは除外）
-    existingCategories.forEach(cat => {
-        if (!orderedCategories.includes(cat) && !isExcludedCategory(cat)) {
-            orderedCategories.push(cat);
-        }
-    });
+    // 順序に含まれていないカテゴリーは追加しない（categoryOrderに含まれるもののみ表示）
     
     // orderedCategoriesが空の場合は、すべてのカテゴリーを表示（除外カテゴリー以外）
     if (orderedCategories.length === 0) {
@@ -1198,17 +1253,27 @@ function updateCategoryFlow() {
         const dishImageContainer = document.createElement('div');
         dishImageContainer.className = 'category-flow-images';
         
-        if (selectedDishes[category] && selectedDishes[category].length > 0) {
-            // 選択されている場合はhas-selectionクラスを追加
-            categoryItem.classList.add('has-selection');
+        // 副菜の場合は常に2つのスロットを表示
+        const isSideCategory = category === '副菜';
+        const maxSlots = isSideCategory ? 2 : 1;
+        
+        // 選択されたdishのリストを取得
+        const selectedDishList = selectedDishes[category] || [];
+        const dishesToShow = selectedDishList.slice(0, maxSlots);
+        
+        // スロットを表示（副菜は2つ、その他は1つ）
+        for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
+            const dishName = dishesToShow[slotIndex];
             
-            // 選択されたすべてのdishの画像を表示（縦に並べる）
-            selectedDishes[category].forEach((dishName) => {
+            if (dishName) {
+                // 選択されている場合は画像を表示
                 const dishData = nutritionData.find(
                     item => item.category === category && item.dish === dishName
                 );
                 
                 if (dishData) {
+                    categoryItem.classList.add('has-selection');
+                    
                     const imgWrapper = document.createElement('div');
                     imgWrapper.className = 'category-flow-image-wrapper';
                     imgWrapper.setAttribute('data-dish-name', dishName);
@@ -1260,17 +1325,25 @@ function updateCategoryFlow() {
                     imgWrapper.appendChild(deleteButton);
                     dishImageContainer.appendChild(imgWrapper);
                 }
-            });
-        } else {
-            // 未選択の場合はプレースホルダー画像
-            const placeholder = document.createElement('div');
-            placeholder.className = 'category-flow-placeholder';
-            const placeholderImg = document.createElement('img');
-            placeholderImg.src = 'images/unselected-dish.png';
-            placeholderImg.alt = '未選択';
-            placeholderImg.className = 'category-flow-placeholder-image';
-            placeholder.appendChild(placeholderImg);
-            dishImageContainer.appendChild(placeholder);
+            } else {
+                // 未選択のスロットはプレースホルダー画像
+                const placeholder = document.createElement('div');
+                placeholder.className = 'category-flow-placeholder';
+                const placeholderImg = document.createElement('img');
+                placeholderImg.src = 'images/unselected-dish.png';
+                placeholderImg.alt = '未選択';
+                placeholderImg.className = 'category-flow-placeholder-image';
+                placeholder.appendChild(placeholderImg);
+                dishImageContainer.appendChild(placeholder);
+            }
+        }
+        
+        // 副菜が2つ以上選択されている場合、「+N」バッジを表示
+        if (category === '副菜' && selectedDishList.length > 2) {
+            const moreBadge = document.createElement('div');
+            moreBadge.className = 'category-flow-more';
+            moreBadge.textContent = `+${selectedDishList.length - 2}`;
+            dishImageContainer.appendChild(moreBadge);
         }
         
         categoryItem.appendChild(dishImageContainer);
@@ -1479,8 +1552,8 @@ function updateNutritionDisplay(protein, fat, carbs, calories) {
     document.getElementById('total-fat').textContent = fat.toFixed(2);
     document.getElementById('total-carbs').textContent = carbs.toFixed(2);
     
-    // 固定表示の総カロリーを更新
-    updateFixedCalories(calories);
+    // 固定表示のPFCと総カロリーを更新
+    updateFixedCalories(protein, fat, carbs, calories);
 }
 
 function updatePFCChart(protein, fat, carbs) {
@@ -1525,37 +1598,21 @@ function updateFixedPfcBar(proteinPercent, fatPercent, carbsPercent) {
     // 代わりにupdateFixedCaloriesを使用
 }
 
-function updateFixedCalories(calories) {
+function updateFixedCalories(protein, fat, carbs, calories) {
     const fixedCaloriesValue = document.getElementById('fixed-calories-value');
-    const fixedCaloriesItems = document.getElementById('fixed-calories-items');
+    const fixedProteinValue = document.getElementById('fixed-protein-value');
+    const fixedFatValue = document.getElementById('fixed-fat-value');
+    const fixedCarbsValue = document.getElementById('fixed-carbs-value');
     
-    if (!fixedCaloriesValue || !fixedCaloriesItems) return;
+    if (!fixedCaloriesValue || !fixedProteinValue || !fixedFatValue || !fixedCarbsValue) return;
+    
+    // PFCの値を更新
+    fixedProteinValue.textContent = protein.toFixed(1);
+    fixedFatValue.textContent = fat.toFixed(1);
+    fixedCarbsValue.textContent = carbs.toFixed(1);
     
     // 総カロリーを更新
     fixedCaloriesValue.textContent = calories.toFixed(0);
-    
-    // 選択された料理のカロリーを取得
-    const selectedDishData = getSelectedDishData();
-    
-    // カロリーアイテムをクリア
-    fixedCaloriesItems.innerHTML = '';
-    
-    // 各料理を「◯」で表示（中にカロリー数値を表示）
-    selectedDishData.forEach((dish, index) => {
-        const item = document.createElement('span');
-        item.className = 'fixed-calories-item';
-        item.textContent = dish.calories.toFixed(0);
-        item.setAttribute('title', `${dish.dish}: ${dish.calories.toFixed(0)}kcal`);
-        fixedCaloriesItems.appendChild(item);
-        
-        // 最後のアイテム以外は「＋」を追加
-        if (index < selectedDishData.length - 1) {
-            const plus = document.createElement('span');
-            plus.className = 'fixed-calories-plus';
-            plus.textContent = '＋';
-            fixedCaloriesItems.appendChild(plus);
-        }
-    });
 }
 
 function updatePfcLabel(elementId, percent) {
@@ -1917,60 +1974,7 @@ function setupFixedPfcBarVisibility() {
     window.addEventListener('scroll', updateVisibility, { passive: true });
 }
 
-// ==================== 画像カルーセル ====================
-
-function initImageCarousel() {
-    const carousel = document.getElementById('imageCarousel');
-    if (!carousel) return;
-    
-    // 画像ファイルのリスト（next.png以外）
-    const imageFiles = [
-        'plate_1.png',
-        'plate_2.png',
-        'plate_3.png',
-        'plate_4.png',
-        'hot_spring_egg.png',
-        'maple_nuts_and_pumpkin_gourmet_salad.png',
-        'okra_and_long_yam_neranner_sesame_dressing.png',
-        'salt_kelp_and_roasted_carrot_lap.png',
-        'salt_kelp_poached_egg.png',
-        'salt_kelp_roasted_chicken.png',
-        'sliced_radish_kimchi_and_korean_dressing.png',
-        'soft_chicken_ginger_roast.png',
-        'soft_sea_urchin_tamago.png',
-        'spice_curry.png',
-        'spicy_malaxi_spring_rain.png',
-        'tara_vinegar_anakake.png',
-        'teriyaki_pork_hamburger.png',
-        'three_mushroom_ancho_marinade.png'
-    ];
-    
-    const container = document.createElement('div');
-    container.className = 'image-carousel-container';
-    
-    // CSS変数で画像数を設定
-    container.style.setProperty('--image-count', imageFiles.length);
-    
-    // 画像を2セット作成して無限ループを実現
-    for (let i = 0; i < 2; i++) {
-        imageFiles.forEach(imageFile => {
-            const item = document.createElement('div');
-            item.className = 'image-carousel-item';
-            
-            const img = document.createElement('img');
-            img.src = `images/${imageFile}`;
-            img.alt = imageFile.replace('.png', '').replace(/_/g, ' ');
-            img.onerror = function() {
-                item.style.display = 'none';
-            };
-            
-            item.appendChild(img);
-            container.appendChild(item);
-        });
-    }
-    
-    carousel.appendChild(container);
-}
+// ==================== ページロード ====================
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Page load started');
@@ -1978,8 +1982,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ハンバーガーメニューの設定
     setupHamburgerMenu();
     
-    // 画像カルーセルの初期化
-    initImageCarousel();
+    // 画像カルーセルは削除（単一画像に変更）
     
     // Google Sheetsから読み込み
     await loadFromGoogleSheets();
