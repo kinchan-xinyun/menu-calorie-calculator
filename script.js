@@ -1136,9 +1136,7 @@ function updateCategoryFlow() {
             const dishImageContainer = document.createElement('div');
             dishImageContainer.className = 'category-flow-images';
             
-            // 副菜の場合は2つのプレースホルダー、その他は1つ
-            const isSideCategory = category === '副菜';
-            const maxSlots = isSideCategory ? 2 : 1;
+            const maxSlots = 1;
             
             for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
                 const placeholder = document.createElement('div');
@@ -1232,7 +1230,6 @@ function updateCategoryFlow() {
         
         // 選択されたdishのリストを取得
         const selectedDishList = selectedDishes[category] || [];
-        const isSideCategory = category === '副菜';
         
         if (selectedDishList.length > 0) {
             // 選択されている場合は、すべてのdishを表示（副菜と主菜は複数選択可能）
@@ -1297,18 +1294,15 @@ function updateCategoryFlow() {
                 }
             });
         } else {
-            // 未選択の場合は初期状態のプレースホルダーを表示（副菜は2つ、主菜は1つ、その他は1つ）
-            const maxSlots = isSideCategory ? 2 : 1;
-            for (let slotIndex = 0; slotIndex < maxSlots; slotIndex++) {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'category-flow-placeholder';
-                const placeholderImg = document.createElement('img');
-                placeholderImg.src = 'images/unselected-dish.png';
-                placeholderImg.alt = '未選択';
-                placeholderImg.className = 'category-flow-placeholder-image';
-                placeholder.appendChild(placeholderImg);
-                dishImageContainer.appendChild(placeholder);
-            }
+            // 未選択の場合は初期状態のプレースホルダーを表示（すべて1つ）
+            const placeholder = document.createElement('div');
+            placeholder.className = 'category-flow-placeholder';
+            const placeholderImg = document.createElement('img');
+            placeholderImg.src = 'images/unselected-dish.png';
+            placeholderImg.alt = '未選択';
+            placeholderImg.className = 'category-flow-placeholder-image';
+            placeholder.appendChild(placeholderImg);
+            dishImageContainer.appendChild(placeholder);
         }
         
         categoryItem.appendChild(dishImageContainer);
