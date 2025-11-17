@@ -1,7 +1,7 @@
 ,料理名,タンパク質,脂質,炭水化物,総カロリー,画像パス,販売状態
-主食,ミックスサラダ,0.48,0.06,1.55,7,images/mix_salad.jpg,販売中
-主食,十五穀米,3.21,0.54,37.46,167,images/fifteen_grain_rice.jpg,販売中
-主食,ハーフ,2.09,0.33,20.28,90.5,images/half.jpg,販売中
+主食,ミックスサラダ,0.48,0.06,1.55,7,images/mix_salad.png,販売中
+主食,十五穀米,3.21,0.54,37.46,167,images/fifteen_grain_rice.png,販売中
+主食,ハーフ,2.09,0.33,20.28,90.5,images/half.png,販売中
 ドレッシング,自家焙煎胡麻ドレッシング,1.1,1.7,6.2,44,images/home_brew_sesame_dressing.png,販売中
 ドレッシング,香味オニオンドレッシング,0.4,0.05,2,11,images/fragrant_onion_dressing.png,販売中
 ドレッシング,スパイシラチャードレッシング,0.9,0.45,3.3,22,images/spicy_lachacha_dressing.png,販売中

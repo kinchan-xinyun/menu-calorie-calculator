@@ -227,6 +227,15 @@ function init() {
         categoryLabel.appendChild(enLabel);
         categoryLabel.appendChild(jaLabel);
         
+        // ドレッシングカテゴリーに注釈を追加
+        if (category === 'ドレッシング') {
+            const note = document.createElement('div');
+            note.className = 'category-label-note';
+            note.textContent = '※ サラダ選択の方のみ選択可能';
+            categoryLabel.appendChild(note);
+            categoryLabel.classList.add('has-note');
+        }
+        
         // 「クリア」ボタン
         const clearButton = document.createElement('button');
         clearButton.className = 'clear-button';
@@ -269,8 +278,8 @@ function init() {
         });
         
         categoryRow.appendChild(categoryLabel);
-        categoryRow.appendChild(clearButton);
         categoryRow.appendChild(dishesRow);
+        categoryRow.appendChild(clearButton);
         categoryRow.appendChild(addButton);
         container.appendChild(categoryRow);
         
@@ -469,6 +478,19 @@ function createDishButton(dish, category, dishesRow) {
     label.className = 'dish-button-label';
     label.textContent = dish.dish;
     
+    // カロリー情報を表示
+    const caloriesInfo = document.createElement('div');
+    caloriesInfo.className = 'dish-button-calories';
+    const calories = dish.calories || 0;
+    const caloriesValue = document.createElement('span');
+    caloriesValue.className = 'dish-button-calories-value';
+    caloriesValue.textContent = calories.toFixed(0);
+    const caloriesUnit = document.createElement('span');
+    caloriesUnit.className = 'dish-button-calories-unit';
+    caloriesUnit.textContent = 'kcal';
+    caloriesInfo.appendChild(caloriesValue);
+    caloriesInfo.appendChild(caloriesUnit);
+    
     // PFC情報を表示
     const pfcInfo = document.createElement('div');
     pfcInfo.className = 'dish-button-pfc';
@@ -482,39 +504,61 @@ function createDishButton(dish, category, dishesRow) {
     const proteinIcon = document.createElement('span');
     proteinIcon.className = 'pfc-icon';
     proteinIcon.textContent = 'P';
+    const proteinValueContainer = document.createElement('span');
+    proteinValueContainer.className = 'pfc-value-container';
     const proteinValue = document.createElement('span');
     proteinValue.className = 'pfc-value';
-    proteinValue.textContent = `${protein.toFixed(1)}g`;
+    proteinValue.textContent = protein.toFixed(1);
+    const proteinUnit = document.createElement('span');
+    proteinUnit.className = 'pfc-unit';
+    proteinUnit.textContent = 'g';
+    proteinValueContainer.appendChild(proteinValue);
+    proteinValueContainer.appendChild(proteinUnit);
     proteinItem.appendChild(proteinIcon);
-    proteinItem.appendChild(proteinValue);
+    proteinItem.appendChild(proteinValueContainer);
     
     const fatItem = document.createElement('div');
     fatItem.className = 'pfc-item fat-item';
     const fatIcon = document.createElement('span');
     fatIcon.className = 'pfc-icon';
     fatIcon.textContent = 'F';
+    const fatValueContainer = document.createElement('span');
+    fatValueContainer.className = 'pfc-value-container';
     const fatValue = document.createElement('span');
     fatValue.className = 'pfc-value';
-    fatValue.textContent = `${fat.toFixed(1)}g`;
+    fatValue.textContent = fat.toFixed(1);
+    const fatUnit = document.createElement('span');
+    fatUnit.className = 'pfc-unit';
+    fatUnit.textContent = 'g';
+    fatValueContainer.appendChild(fatValue);
+    fatValueContainer.appendChild(fatUnit);
     fatItem.appendChild(fatIcon);
-    fatItem.appendChild(fatValue);
+    fatItem.appendChild(fatValueContainer);
     
     const carbsItem = document.createElement('div');
     carbsItem.className = 'pfc-item carbs-item';
     const carbsIcon = document.createElement('span');
     carbsIcon.className = 'pfc-icon';
     carbsIcon.textContent = 'C';
+    const carbsValueContainer = document.createElement('span');
+    carbsValueContainer.className = 'pfc-value-container';
     const carbsValue = document.createElement('span');
     carbsValue.className = 'pfc-value';
-    carbsValue.textContent = `${carbs.toFixed(1)}g`;
+    carbsValue.textContent = carbs.toFixed(1);
+    const carbsUnit = document.createElement('span');
+    carbsUnit.className = 'pfc-unit';
+    carbsUnit.textContent = 'g';
+    carbsValueContainer.appendChild(carbsValue);
+    carbsValueContainer.appendChild(carbsUnit);
     carbsItem.appendChild(carbsIcon);
-    carbsItem.appendChild(carbsValue);
+    carbsItem.appendChild(carbsValueContainer);
     
     pfcInfo.appendChild(proteinItem);
     pfcInfo.appendChild(fatItem);
     pfcInfo.appendChild(carbsItem);
     
     labelContainer.appendChild(label);
+    labelContainer.appendChild(caloriesInfo);
     labelContainer.appendChild(pfcInfo);
     
     // 画像を上に、名前とPFCを下に配置
@@ -1434,6 +1478,9 @@ function updateNutritionDisplay(protein, fat, carbs, calories) {
     document.getElementById('total-protein').textContent = protein.toFixed(2);
     document.getElementById('total-fat').textContent = fat.toFixed(2);
     document.getElementById('total-carbs').textContent = carbs.toFixed(2);
+    
+    // 固定表示の総カロリーを更新
+    updateFixedCalories(calories);
 }
 
 function updatePFCChart(protein, fat, carbs) {
@@ -1474,19 +1521,41 @@ function updatePFCChart(protein, fat, carbs) {
 }
 
 function updateFixedPfcBar(proteinPercent, fatPercent, carbsPercent) {
-    const fixedProteinSegment = document.getElementById('fixed-protein-segment');
-    const fixedFatSegment = document.getElementById('fixed-fat-segment');
-    const fixedCarbsSegment = document.getElementById('fixed-carbs-segment');
+    // この関数は後方互換性のため残すが、実際には使用しない
+    // 代わりにupdateFixedCaloriesを使用
+}
+
+function updateFixedCalories(calories) {
+    const fixedCaloriesValue = document.getElementById('fixed-calories-value');
+    const fixedCaloriesItems = document.getElementById('fixed-calories-items');
     
-    if (fixedProteinSegment && fixedFatSegment && fixedCarbsSegment) {
-        fixedProteinSegment.style.width = proteinPercent + '%';
-        fixedFatSegment.style.width = fatPercent + '%';
-        fixedCarbsSegment.style.width = carbsPercent + '%';
+    if (!fixedCaloriesValue || !fixedCaloriesItems) return;
+    
+    // 総カロリーを更新
+    fixedCaloriesValue.textContent = calories.toFixed(0);
+    
+    // 選択された料理のカロリーを取得
+    const selectedDishData = getSelectedDishData();
+    
+    // カロリーアイテムをクリア
+    fixedCaloriesItems.innerHTML = '';
+    
+    // 各料理を「◯」で表示（中にカロリー数値を表示）
+    selectedDishData.forEach((dish, index) => {
+        const item = document.createElement('span');
+        item.className = 'fixed-calories-item';
+        item.textContent = dish.calories.toFixed(0);
+        item.setAttribute('title', `${dish.dish}: ${dish.calories.toFixed(0)}kcal`);
+        fixedCaloriesItems.appendChild(item);
         
-        updatePfcLabel('fixed-protein-percent', proteinPercent);
-        updatePfcLabel('fixed-fat-percent', fatPercent);
-        updatePfcLabel('fixed-carbs-percent', carbsPercent);
-    }
+        // 最後のアイテム以外は「＋」を追加
+        if (index < selectedDishData.length - 1) {
+            const plus = document.createElement('span');
+            plus.className = 'fixed-calories-plus';
+            plus.textContent = '＋';
+            fixedCaloriesItems.appendChild(plus);
+        }
+    });
 }
 
 function updatePfcLabel(elementId, percent) {
@@ -1628,26 +1697,8 @@ function setupDishIndicator(dishesRow, dishButtons, category) {
     });
     
     
-    // dishesRowの親要素（categoryRow）にインジケーターを追加
-    const categoryRow = dishesRow.closest('.category-row');
-    if (!categoryRow) {
-        console.error('setupDishIndicator: categoryRow not found for category:', category);
-        // categoryRowが見つからない場合は、dishesRowの親要素に直接追加
-        if (dishesRow.parentNode) {
-            dishesRow.parentNode.insertBefore(indicator, dishesRow.nextSibling);
-            console.log('setupDishIndicator: Inserted indicator to parentNode');
-        }
-        return;
-    }
-    
-    // dishesRowの直後にインジケーターを挿入（addButtonの前）
-    const addButton = categoryRow.querySelector('.add-button');
-    if (addButton) {
-        categoryRow.insertBefore(indicator, addButton);
-    } else {
-        // addButtonがない場合は、dishesRowの直後に追加
-        dishesRow.insertAdjacentElement('afterend', indicator);
-    }
+    // dishesRowの直後にインジケーターを追加
+    dishesRow.insertAdjacentElement('afterend', indicator);
     
     
     // 現在の位置を更新する関数

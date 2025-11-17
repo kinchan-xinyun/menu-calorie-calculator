@@ -5,23 +5,23 @@
 }
 
 :root {
-    --primary-green: #7aa802;
-    --dark-green: #258039;
-    --accent-yellow: #f2c057;
-    --soft-yellow: #ffdb94;
-    --protein: #cf3721;
-    --fat: #ee693f;
-    --carbs: #739f3d;
-    --bg-light: #F4EAD5;
-    --text-dark: #181818;
+    --primary-green: #54af46;
+    --dark-green: #54af46;
+    --accent-yellow: #ffe15f;
+    --soft-yellow: #ffe15f;
+    --protein: #e74c3c;
+    --fat: #f1c40f;
+    --carbs: #9bcc50;
+    --bg-light: #ffffff;
+    --text-dark: #000000;
     --text-light: #6b7280;
-    --border: #f5be41;
+    --border: #ffe15f;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 body {
-    font-family: "Kaisei Decol", serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 900;
     min-height: 100vh;
     padding: 0;
@@ -130,7 +130,7 @@ body {
 }
 
 .menu-header h3 {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 24px;
     font-weight: 700;
     color: var(--text-dark);
@@ -167,7 +167,7 @@ body {
 }
 
 .menu-item {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     display: block;
     padding: 16px 20px;
     color: var(--text-dark);
@@ -242,7 +242,7 @@ body {
 }
 
 .category-nav-item {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 12px;
     font-weight: 700;
     padding: 3px 4px;
@@ -250,7 +250,7 @@ body {
     border-right: none;
     border-left: none;
     border-top: none;
-    border-bottom: 2px solid var(--fat);
+    border-bottom: 2px solid #fa9e57;
     color: var(--text-dark);
     cursor: pointer;
     transition: all 0.2s;
@@ -323,6 +323,39 @@ body {
     }
 }
 
+/* Description */
+.description {
+    text-align: center;
+    background: whitesmoke;
+}
+
+.description p {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    margin: 8px 0;
+    line-height: 1.6;
+    color: var(--text-dark);
+}
+
+.description p:first-child {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--primary-green);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+}
+
+.description p:nth-child(2) {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.description p:last-child {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
 /* 栄養情報サマリー（固定） */
 .result-container {
     padding: 16px;
@@ -343,7 +376,7 @@ body {
 }
 
 .total-header h2 {
-    font-family: 'Yusei Magic', sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     color: var(--text-dark);
     font-size: 24px;
     font-weight: 700;
@@ -361,14 +394,14 @@ body {
 }
 
 .calories-number {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Montserrat", sans-serif;
     font-size: 32px;
     font-weight: 800;
     line-height: 1;
 }
 
 .calories-unit {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 18px;
     opacity: 0.95;
     margin-top: 2px;
@@ -407,7 +440,7 @@ body {
 }
 
 .nutrition-label {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 900;
     font-size: 16px;
     text-transform: uppercase;
@@ -417,7 +450,7 @@ body {
 }
 
 .nutrition-value {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Montserrat", sans-serif;
     font-weight: 900;
     font-size: 20px;
     font-weight: 800;
@@ -427,7 +460,7 @@ body {
 }
 
 .nutrition-unit {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 900;
     font-size: 16px;
     color: var(--text-light);
@@ -437,7 +470,7 @@ body {
 .selected-dishes-list {
     margin: 20px 0;
     padding: 16px;
-    background: #ccecdd;
+    background: var(--dark-green);
     border-radius: 16px;
     display: flex;
     flex-direction: column;
@@ -445,12 +478,12 @@ body {
 }
 
 .selected-dishes-list-title {
-    font-family: 'Yusei Magic', sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 18px;
     font-weight: 700;
     color: var(--text-dark);
     margin-bottom: 8px;
-    border-left: 4px solid var(--primary-green);
+    border-left: 4px solid var(--border);
     padding-left: 10px;
 }
 
@@ -475,7 +508,7 @@ body {
 }
 
 .selected-dish-item-name {
-    font-family: "Kaisei Decol", serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 900;
     font-size: 14px;
     color: var(--text-dark);
@@ -585,29 +618,49 @@ body {
     padding: 16px 0 20px 0;
     text-align: left;
     position: relative;
+    padding-bottom: 40px;
+}
+
+.category-label.has-note {
+    padding-bottom: 30px;
 }
 
 .category-label-en {
-    font-family: "Limelight", sans-serif;
+    font-family: "Montserrat", sans-serif;
     font-size: 40px;
     font-weight: 800;
     letter-spacing: 0.5px;
     color: var(--dark-green);
     display: block;
     text-align: center;
-    border-bottom: 3px solid #ee693f;
+    border-bottom: 3px solid var(--border);
 }
 
 .category-label-ja {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 18px;
     font-weight: 500;
-    color: var(--text-light);
+    color: var(--text-dark);
     position: absolute;
     bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
     top: 70px;
+}
+
+.category-label-note {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dark);
+    text-align: center;
+    margin-top: 40px;
+    padding: 4px 8px;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-yellow);
+    position: relative;
+    z-index: 1;
 }
 
 .dishes-row {
@@ -618,7 +671,7 @@ body {
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 35px calc(50% - 60px) 35px calc(50% - 60px);
+    padding: 40px calc(50% - 60px) 40px calc(50% - 60px);
     scroll-padding: 0 calc(50% - 60px);
     scroll-snap-type: x proximity;
 }
@@ -714,13 +767,13 @@ body {
 }
 
 .dish-button.selected .dish-button-label-container {
-    background: #ffccac;
+    background: #faeeb8;
     color: var(--text-dark);
     box-shadow: none;
 }
 
 .dish-button-label {
-    font-family: "Kaisei Decol", serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 900;
     font-size: 12px;
     text-align: center;
@@ -728,12 +781,37 @@ body {
     width: 100%;
 }
 
+.dish-button-calories {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    margin-top: 2px;
+}
+
+.dish-button-calories-value {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--primary-green);
+}
+
+.dish-button-calories-unit {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-weight: 500;
+    font-size: 9px;
+    line-height: 1;
+    color: var(--text-light);
+}
+
 .dish-button-pfc {
     display: flex;
     flex-direction: column;
     gap: 4px;
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 400;
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -743,11 +821,11 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    font-family: "Kaisei Decol", serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
 }
 
 .pfc-icon {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -759,10 +837,25 @@ body {
     flex-shrink: 0;
 }
 
+.pfc-value-container {
+    display: flex;
+    align-items: baseline;
+    gap: 1px;
+}
+
 .pfc-value {
-    font-family: "Yusei Magic", sans-serif;
-    font-size: 11px;
-    font-weight: 900;
+    font-family: "Montserrat", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.pfc-unit {
+    font-family: "Montserrat", sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1;
+    opacity: 0.8;
 }
 
 .pfc-item.protein-item .pfc-icon {
@@ -771,6 +864,10 @@ body {
 }
 
 .pfc-item.protein-item .pfc-value {
+    color: var(--protein);
+}
+
+.pfc-item.protein-item .pfc-unit {
     color: var(--protein);
 }
 
@@ -783,6 +880,10 @@ body {
     color: var(--fat);
 }
 
+.pfc-item.fat-item .pfc-unit {
+    color: var(--fat);
+}
+
 .pfc-item.carbs-item .pfc-icon {
     background: rgba(34, 197, 94, 0.15);
     color: var(--carbs);
@@ -792,10 +893,14 @@ body {
     color: var(--carbs);
 }
 
+.pfc-item.carbs-item .pfc-unit {
+    color: var(--carbs);
+}
+
 .dish-button.selected {
-    background: #ffccac;
+    background: #faeeb8;
     color: var(--text-dark);
-    border: 2px solid #fd974f;
+    border: 2px solid #c3b990;
 }
 
 .dish-button.center-focused {
@@ -806,29 +911,41 @@ body {
 
 .dish-button.selected .pfc-item.protein-item .pfc-icon {
     background: rgba(239, 68, 68, 0.2);
-    color: #c53030;
+    color: var(--protein);
 }
 
 .dish-button.selected .pfc-item.protein-item .pfc-value {
-    color: #c53030;
+    color: var(--protein);
+}
+
+.dish-button.selected .pfc-item.protein-item .pfc-unit {
+    color: var(--protein);
 }
 
 .dish-button.selected .pfc-item.fat-item .pfc-icon {
     background: rgba(251, 191, 36, 0.2);
-    color: #b45309;
+    color: var(--fat);
 }
 
 .dish-button.selected .pfc-item.fat-item .pfc-value {
-    color: #b45309;
+    color: var(--fat);
+}
+
+.dish-button.selected .pfc-item.fat-item .pfc-unit {
+    color: var(--fat);
 }
 
 .dish-button.selected .pfc-item.carbs-item .pfc-icon {
     background: rgba(34, 197, 94, 0.2);
-    color: #15803d;
+    color: var(--carbs);
 }
 
 .dish-button.selected .pfc-item.carbs-item .pfc-value {
-    color: #15803d;
+    color: var(--carbs);
+}
+
+.dish-button.selected .pfc-item.carbs-item .pfc-unit {
+    color: var(--carbs);
 }
 
 .dish-button.none-button {
@@ -845,29 +962,41 @@ body {
 
 .dish-button.none-button.selected .pfc-item.protein-item .pfc-icon {
     background: rgba(239, 68, 68, 0.2);
-    color: #c53030;
+    color: var(--protein);
 }
 
 .dish-button.none-button.selected .pfc-item.protein-item .pfc-value {
-    color: #c53030;
+    color: var(--protein);
+}
+
+.dish-button.none-button.selected .pfc-item.protein-item .pfc-unit {
+    color: var(--protein);
 }
 
 .dish-button.none-button.selected .pfc-item.fat-item .pfc-icon {
     background: rgba(251, 191, 36, 0.2);
-    color: #b45309;
+    color: var(--fat);
 }
 
 .dish-button.none-button.selected .pfc-item.fat-item .pfc-value {
-    color: #b45309;
+    color: var(--fat);
+}
+
+.dish-button.none-button.selected .pfc-item.fat-item .pfc-unit {
+    color: var(--fat);
 }
 
 .dish-button.none-button.selected .pfc-item.carbs-item .pfc-icon {
     background: rgba(34, 197, 94, 0.2);
-    color: #15803d;
+    color: var(--carbs);
 }
 
 .dish-button.none-button.selected .pfc-item.carbs-item .pfc-value {
-    color: #15803d;
+    color: var(--carbs);
+}
+
+.dish-button.none-button.selected .pfc-item.carbs-item .pfc-unit {
+    color: var(--carbs);
 }
 
 /* 販売中止スタイル */
@@ -945,7 +1074,7 @@ body {
 }
 
 .add-button {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 900;
     padding: 10px 16px;
     border: 2px solid var(--border);
@@ -972,7 +1101,7 @@ body {
 }
 
 .clear-button {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 900;
     padding: 10px 16px;
     border: 2px solid var(--border);
@@ -1023,12 +1152,12 @@ body {
 }
 
 .pfc-section h3 {
-    font-family: 'Yusei Magic', sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     color: var(--text-dark);
     margin-bottom: 16px;
     font-size: 18px;
     font-weight: 700;
-    border-left: 4px solid #ee693f;
+    border-left: 4px solid var(--dark-green);
     padding-left: 10px;
 }
 
@@ -1059,7 +1188,7 @@ body {
 }
 
 .pfc-label {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     color: white;
     font-weight: 700;
     font-size: 14px;
@@ -1069,22 +1198,22 @@ body {
 }
 
 .protein-segment {
-    background: linear-gradient(135deg, var(--protein) 0%, #c45a51 100%);
+    background: linear-gradient(135deg, var(--protein) 0%, #c0392b 100%);
 }
 
 .fat-segment {
-    background: linear-gradient(135deg, var(--fat) 0%, #c79645 100%);
+    background: linear-gradient(135deg, var(--fat) 0%, #d4ac0d 100%);
 }
 
 .carbs-segment {
-    background: linear-gradient(135deg, var(--carbs) 0%, #4a9b65 100%);
+    background: linear-gradient(135deg, var(--carbs) 0%, #7fb347 100%);
 }
 
 .pfc-details {
     background: #f9fafb;
     padding: 16px;
     border-radius: 12px;
-    border-left: 4px solid #ee693f;
+    border-left: 4px solid var(--dark-green);
 }
 
 .pfc-detail-item {
@@ -1125,7 +1254,7 @@ body {
 }
 
 .pfc-detail-label {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-weight: 600;
     color: var(--text-dark);
     font-size: 14px;
@@ -1138,7 +1267,7 @@ body {
 }
 
 .pfc-detail-value {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Montserrat", sans-serif;
     font-weight: 700;
     color: var(--carbs);
     font-size: 14px;
@@ -1147,14 +1276,14 @@ body {
 }
 
 .pfc-detail-kcal {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     color: var(--text-light);
     font-size: 14px;
     min-width: 35px;
 }
 
 .pfc-detail-percent {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Montserrat", sans-serif;
     background: linear-gradient(135deg, #e8f0eb 0%, #d1e7dd 100%);
     padding: 6px 12px;
     border-radius: 16px;
@@ -1214,7 +1343,7 @@ body {
 }
 
 .category-flow-label {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 10px;
     font-weight: 700;
     color: var(--text-dark);
@@ -1341,7 +1470,7 @@ body {
 
 .category-flow-arrow {
     font-size: 16px;
-    color: var(--text-light);
+    color: var(--dark-green);
     flex-shrink: 0;
     margin: 0 4px;
     display: flex;
@@ -1447,13 +1576,89 @@ body {
 }
 
 .fixed-pfc-type {
-    font-family: "Yusei Magic", sans-serif;
+    font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 14px;
     font-weight: 800;
     color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     line-height: 1;
     display: block;
+}
+
+.fixed-calories-container {
+    background: linear-gradient(135deg, #e8f0eb 0%, #d1e7dd 100%);
+    padding: 8px 16px;
+    /* border-radius: 20px; */
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
+    margin: 4px 8px;
+}
+
+.fixed-calories-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.fixed-calories-items {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.fixed-calories-item {
+    font-family: "Montserrat", sans-serif;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--primary-green);
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-green);
+    background: white;
+    cursor: help;
+    padding: 0 4px;
+    box-sizing: border-box;
+}
+
+.fixed-calories-plus {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+    margin: 0 2px;
+}
+
+.fixed-calories-equals {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+    margin: 0 4px;
+}
+
+.fixed-calories-value {
+    font-family: "Montserrat", sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--primary-green);
+    line-height: 1;
+}
+
+.fixed-calories-unit {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-left: 2px;
 }
 
 /* モーダル */

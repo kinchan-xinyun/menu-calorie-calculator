@@ -6,10 +6,9 @@
     <title>栄養情報ビューア</title>
     <link rel="icon" type="image/jpeg" href="images/one-plate-icon.png">
     <link rel="apple-touch-icon" href="images/one-plate-icon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Limelight&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Zen+Kaku+Gothic+New&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -37,6 +36,12 @@
         <div class="image-carousel" id="imageCarousel">
             <!-- 画像がここに動的に追加されます -->
         </div>
+        
+        <div class="description">
+            <p>あなただけの ONE PLATE</p>
+            <p>簡単にカロリーを計算します</p>
+            <p>上から順に選択してみてください</p>
+        </div>
 
         <div class="menu-section">
             <div id="categories-container" class="categories-container">
@@ -46,7 +51,7 @@
         <div id="result-container" class="result-container">
             <div id="result" class="result">
                 <div class="total-header">
-                    <h2>📊 栄養情報（合計）</h2>
+                    <h2>栄養情報（合計）</h2>
                     <div class="total-calories">
                         <div class="calories-number" id="total-calories">0</div>
                         <div class="calories-unit">kcal</div>
@@ -55,19 +60,19 @@
 
                 <div class="nutrition-grid">
                     <div class="nutrition-card protein-card">
-                        <div class="nutrition-icon">🥩</div>
+                        <div class="nutrition-icon">P</div>
                         <div class="nutrition-label">タンパク質</div>
                         <div class="nutrition-value" id="total-protein">0</div>
                         <div class="nutrition-unit">g</div>
                     </div>
                     <div class="nutrition-card fat-card">
-                        <div class="nutrition-icon">🧈</div>
+                        <div class="nutrition-icon">F</div>
                         <div class="nutrition-label">脂質</div>
                         <div class="nutrition-value" id="total-fat">0</div>
                         <div class="nutrition-unit">g</div>
                     </div>
                     <div class="nutrition-card carbs-card">
-                        <div class="nutrition-icon">🌾</div>
+                        <div class="nutrition-icon">C</div>
                         <div class="nutrition-label">炭水化物</div>
                         <div class="nutrition-value" id="total-carbs">0</div>
                         <div class="nutrition-unit">g</div>
@@ -142,20 +147,12 @@
         <div class="fixed-pfc-content">
             <div id="categoryFlow" class="category-flow"></div>
             <div id="selectedDishesImages" class="selected-dishes-images"></div>
-            <div class="fixed-pfc-bar-container">
-                <div class="fixed-pfc-bar-inner" id="fixed-pfc-bar">
-                    <div class="pfc-segment protein-segment" id="fixed-protein-segment" style="width: 0%">
-                        <span class="fixed-pfc-type">P</span>
-                        <span class="pfc-label" id="fixed-protein-percent"></span>
-                    </div>
-                    <div class="pfc-segment fat-segment" id="fixed-fat-segment" style="width: 0%">
-                        <span class="fixed-pfc-type">F</span>
-                        <span class="pfc-label" id="fixed-fat-percent"></span>
-                    </div>
-                    <div class="pfc-segment carbs-segment" id="fixed-carbs-segment" style="width: 0%">
-                        <span class="fixed-pfc-type">C</span>
-                        <span class="pfc-label" id="fixed-carbs-percent"></span>
-                    </div>
+            <div class="fixed-calories-container">
+                <div class="fixed-calories-display" id="fixed-calories-display">
+                    <div class="fixed-calories-items" id="fixed-calories-items"></div>
+                    <span class="fixed-calories-equals">=</span>
+                    <span class="fixed-calories-value" id="fixed-calories-value">0</span>
+                    <span class="fixed-calories-unit">kcal</span>
                 </div>
             </div>
         </div>
