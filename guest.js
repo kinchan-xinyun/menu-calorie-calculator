@@ -1874,13 +1874,12 @@ function initImageCarousel() {
     
     // 画像ファイルのリスト（next.png以外）
     const imageFiles = [
-        'fifteen_grain_rice.png',
-        'fragrant_onion_dressing.png',
-        'half.png',
-        'home_brew_sesame_dressing.png',
+        'plate_1.png',
+        'plate_2.png',
+        'plate_3.png',
+        'plate_4.png',
         'hot_spring_egg.png',
         'maple_nuts_and_pumpkin_gourmet_salad.png',
-        'mix_salad.png',
         'okra_and_long_yam_neranner_sesame_dressing.png',
         'salt_kelp_and_roasted_carrot_lap.png',
         'salt_kelp_poached_egg.png',
@@ -1889,7 +1888,6 @@ function initImageCarousel() {
         'soft_chicken_ginger_roast.png',
         'soft_sea_urchin_tamago.png',
         'spice_curry.png',
-        'spicy_lachacha_dressing.png',
         'spicy_malaxi_spring_rain.png',
         'tara_vinegar_anakake.png',
         'teriyaki_pork_hamburger.png',
