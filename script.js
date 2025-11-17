@@ -1156,7 +1156,18 @@ function updateCategoryFlow() {
                 };
                 
                 // 画像のsrcを設定（onload/onerrorの後に設定）
-                placeholderImg.src = 'images/unselected-dish.png';
+                placeholderImg.src = './images/unselected-dish.png';
+
+                // ロード完了時
+                placeholderImg.onload = function() {
+                    this.style.display = 'block';
+                };
+                
+                // ロード失敗時
+                placeholderImg.onerror = function() {
+                    console.warn('Failed to load:', this.src);
+                    this.style.display = 'block'; // それでも表示
+                };
                 
                 placeholder.appendChild(placeholderImg);
                 dishImageContainer.appendChild(placeholder);
