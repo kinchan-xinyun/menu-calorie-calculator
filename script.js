@@ -1142,9 +1142,22 @@ function updateCategoryFlow() {
                 const placeholder = document.createElement('div');
                 placeholder.className = 'category-flow-placeholder';
                 const placeholderImg = document.createElement('img');
-                placeholderImg.src = 'images/unselected-dish.png';
                 placeholderImg.alt = '未選択';
                 placeholderImg.className = 'category-flow-placeholder-image';
+                
+                // 画像の読み込みを確実にする
+                placeholderImg.onload = function() {
+                    this.style.display = 'block';
+                };
+                placeholderImg.onerror = function() {
+                    // 画像が読み込めない場合でも表示を維持
+                    this.style.display = 'block';
+                    console.warn('Placeholder image failed to load:', this.src);
+                };
+                
+                // 画像のsrcを設定（onload/onerrorの後に設定）
+                placeholderImg.src = 'images/unselected-dish.png';
+                
                 placeholder.appendChild(placeholderImg);
                 dishImageContainer.appendChild(placeholder);
             }
@@ -1298,9 +1311,22 @@ function updateCategoryFlow() {
             const placeholder = document.createElement('div');
             placeholder.className = 'category-flow-placeholder';
             const placeholderImg = document.createElement('img');
-            placeholderImg.src = 'images/unselected-dish.png';
             placeholderImg.alt = '未選択';
             placeholderImg.className = 'category-flow-placeholder-image';
+            
+            // 画像の読み込みを確実にする
+            placeholderImg.onload = function() {
+                this.style.display = 'block';
+            };
+            placeholderImg.onerror = function() {
+                // 画像が読み込めない場合でも表示を維持
+                this.style.display = 'block';
+                console.warn('Placeholder image failed to load:', this.src);
+            };
+            
+            // 画像のsrcを設定（onload/onerrorの後に設定）
+            placeholderImg.src = 'images/unselected-dish.png';
+            
             placeholder.appendChild(placeholderImg);
             dishImageContainer.appendChild(placeholder);
         }
@@ -1960,9 +1986,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 固定PFCバランスの表示制御を設定
     setupFixedPfcBarVisibility();
     
+    // プレースホルダー画像をプリロード
+    const preloadImage = new Image();
+    preloadImage.src = 'images/unselected-dish.png';
+    
     // フロー図を初期化（nutritionDataが読み込まれた後）
-    // 少し遅延を入れて確実に表示されるようにする
-    setTimeout(() => {
+    // 画像のプリロードを待ってから初期化
+    preloadImage.onload = () => {
         updateCategoryFlow();
         
         // fixed-pfc-barがhiddenになっていないか確認
@@ -1970,5 +2000,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (fixedPfcBar) {
             fixedPfcBar.classList.remove('hidden');
         }
-    }, 100);
+    };
+    
+    // 画像の読み込みに失敗した場合や、既に読み込まれている場合のフォールバック
+    preloadImage.onerror = () => {
+        console.warn('Placeholder image preload failed, initializing anyway');
+        updateCategoryFlow();
+        
+        const fixedPfcBar = document.getElementById('fixedPfcBar');
+        if (fixedPfcBar) {
+            fixedPfcBar.classList.remove('hidden');
+        }
+    };
+    
+    // 既に読み込まれている場合（completeプロパティで確認）
+    if (preloadImage.complete) {
+        updateCategoryFlow();
+        
+        const fixedPfcBar = document.getElementById('fixedPfcBar');
+        if (fixedPfcBar) {
+            fixedPfcBar.classList.remove('hidden');
+        }
+    }
 });

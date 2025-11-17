@@ -604,6 +604,8 @@ body {
     display: block;
     text-align: center;
     border-bottom: 3px solid var(--border);
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .category-label-ja {
@@ -616,6 +618,9 @@ body {
     left: 50%;
     transform: translateX(-50%);
     top: 70px;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow-wrap: normal;
 }
 
 .category-label-note {
@@ -1430,9 +1435,13 @@ body {
 }
 
 .category-flow-placeholder-image {
+    display: block;
     width: 100%;
     height: 100%;
+    min-width: 100%;
+    min-height: 100%;
     object-fit: cover;
+    object-position: center;
     border-radius: 50%;
 }
 
@@ -1818,4 +1827,25 @@ body {
 .modal-btn-secondary:active {
     background: white;
     transform: scale(0.98);
+}
+
+/* スマホ画面でのカテゴリーラベル調整 */
+@media (max-width: 480px) {
+    .category-label-en {
+        font-size: 32px;
+        letter-spacing: 0.3px;
+    }
+    
+    .category-label-ja {
+        font-size: 16px;
+        top: 60px;
+    }
+    
+    .category-label {
+        padding-bottom: 35px;
+    }
+    
+    .category-label.has-note {
+        padding-bottom: 25px;
+    }
 }
