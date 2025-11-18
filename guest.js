@@ -22,19 +22,19 @@ const categoryNameMap = {
     '副菜': { en: 'SIDE', ja: '副菜' },
     'ドレッシング': { en: 'DRESSING', ja: 'ドレッシング' },
     'その他': { en: 'EXTRAS', ja: 'その他' },
-    'DRINK/SOUP': { en: 'DRINK/SOUP', ja: 'ドリンク/スープ' },
+    'SOUP': { en: 'SOUP', ja: 'スープ' },
+    'DRINK': { en: 'DRINK', ja: 'ドリンク' },
     // 旧カテゴリ名（互換性のため）
     'ごはん': { en: 'RICE', ja: 'ごはん' },
     'サラダ': { en: 'SALAD', ja: 'サラダ' },
     'メイン': { en: 'MAIN', ja: 'メイン' },
     'サイド': { en: 'SIDE', ja: 'サイド' },
-    'スープ': { en: 'SOUP', ja: 'スープ' },
     'デザート': { en: 'DESSERT', ja: 'デザート' },
     '飲み物': { en: 'DRINK', ja: '飲み物' }
 };
 
 // カテゴリーの順序（フロー図の順序）
-const categoryOrder = ['主食', '副菜', '主菜', 'DRINK/SOUP'];
+const categoryOrder = ['主食', '副菜', '主菜', 'SOUP', 'DRINK'];
 
 // カテゴリ名を取得（マッピングがない場合は元の名前を使用）
 function getCategoryNames(category) {
@@ -1168,7 +1168,6 @@ function updateCategoryFlow() {
                     console.warn('Failed to load:', this.src);
                     this.style.display = 'block'; // それでも表示
                 };
-                                
                 
                 placeholder.appendChild(placeholderImg);
                 dishImageContainer.appendChild(placeholder);
@@ -1189,8 +1188,11 @@ function updateCategoryFlow() {
     }
     
     // 除外するカテゴリー（DRINK/SOUPは表示するので除外リストから削除、ドレッシングも除外）
-    const excludedCategories = ['その他', '飲み物', 'スープ', 'デザート', 'ドレッシング'];
+    const excludedCategories = ['その他', '飲み物', 'デザート', 'ドレッシング'];
     const isExcludedCategory = (cat) => {
+        // categoryOrderに含まれるカテゴリは除外しない（DRINKとSOUPを確実に表示）
+        if (categoryOrder.includes(cat)) return false;
+        
         if (excludedCategories.includes(cat)) return true;
         const catNames = getCategoryNames(cat);
         return excludedCategories.some(excluded => {
@@ -1200,40 +1202,32 @@ function updateCategoryFlow() {
     };
     
     // カテゴリーを順序に従って並べ替え（categoryOrderに含まれるもののみ）
+    // categoryOrderの順序を確実に反映するため、順序通りに処理
     const orderedCategories = [];
-    const categoryOrderMap = {};
     
     // categoryOrderの各カテゴリーについて、実際のカテゴリー名をマッピング
     categoryOrder.forEach(orderCategory => {
         // 直接一致する場合
-        if (existingCategories.includes(orderCategory) && !isExcludedCategory(orderCategory)) {
+        if (existingCategories.includes(orderCategory)) {
+            // categoryOrderに含まれるカテゴリは確実に追加（除外チェックをスキップ）
             orderedCategories.push(orderCategory);
-            categoryOrderMap[orderCategory] = orderCategory;
         } else {
             // マッピングを確認（例：'主食' → 'ごはん'）
             const categoryNames = getCategoryNames(orderCategory);
             const matchingCategory = existingCategories.find(cat => {
+                // categoryOrderに含まれるカテゴリは除外しない
+                if (categoryOrder.includes(cat)) return true;
                 if (isExcludedCategory(cat)) return false;
                 const catNames = getCategoryNames(cat);
                 return catNames.en === categoryNames.en;
             });
             if (matchingCategory) {
                 orderedCategories.push(matchingCategory);
-                categoryOrderMap[matchingCategory] = orderCategory;
             }
         }
     });
     
     // 順序に含まれていないカテゴリーは追加しない（categoryOrderに含まれるもののみ表示）
-    
-    // orderedCategoriesが空の場合は、すべてのカテゴリーを表示（除外カテゴリー以外）
-    if (orderedCategories.length === 0) {
-        existingCategories.forEach(cat => {
-            if (!isExcludedCategory(cat)) {
-                orderedCategories.push(cat);
-            }
-        });
-    }
     
     // カテゴリーの順序に従ってフロー図を作成
     orderedCategories.forEach((category, index) => {

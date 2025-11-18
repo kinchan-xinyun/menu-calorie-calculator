@@ -434,25 +434,42 @@ body {
     font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--text-light);
+    color: var(--text-dark);
     margin-bottom: 4px;
 }
 
-.nutrition-value {
+.nutrition-card.protein-card .nutrition-value {
     font-family: "Montserrat", sans-serif;
     font-weight: 900;
     font-size: 20px;
     font-weight: 800;
-    color: var(--text-dark);
+    color: var(--protein);
     margin-bottom: 2px;
-    
+}
+
+.nutrition-card.fat-card .nutrition-value {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--fat);
+    margin-bottom: 2px;
+}
+
+.nutrition-card.carbs-card .nutrition-value {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--carbs);
+    margin-bottom: 2px;
 }
 
 .nutrition-unit {
     font-family: "Montserrat", sans-serif;
     font-weight: 500;
     font-size: 16px;
-    color: var(--text-light);
+    color: var(--text-dark);
 }
 
 /* 選択された料理リスト */
@@ -1611,12 +1628,12 @@ body {
 .fixed-pfc-item {
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: 6px;
 }
 
 .fixed-pfc-label {
     font-family: "Montserrat", sans-serif;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 900;
     color: var(--text-dark);
     line-height: 1;
@@ -1624,7 +1641,7 @@ body {
 
 .fixed-pfc-value {
     font-family: "Montserrat", sans-serif;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 700;
     line-height: 1;
 }
@@ -1869,5 +1886,45 @@ body {
     
     .category-label.has-note {
         padding-bottom: 25px;
+    }
+    
+    /* category-flowのサイズ調整（iPhone 12対応） */
+    .category-flow {
+        padding: 5px 0;
+    }
+    
+    .category-flow-item {
+        min-width: 50px;
+    }
+    
+    .category-flow-image-wrapper {
+        width: 45px;
+        height: 45px;
+        min-width: 45px;
+        min-height: 45px;
+        max-width: 45px;
+        max-height: 45px;
+    }
+    
+    .category-flow-placeholder {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .category-flow-label {
+        font-size: 9px;
+    }
+    
+    .category-flow-arrow {
+        font-size: 20px;
+        margin: 0 2px;
+    }
+    
+    .category-flow-delete {
+        width: 18px;
+        height: 18px;
+        font-size: 12px;
+        top: -4px;
+        right: -4px;
     }
 }

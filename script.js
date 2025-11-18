@@ -22,19 +22,19 @@ const categoryNameMap = {
     '副菜': { en: 'SIDE', ja: '副菜' },
     'ドレッシング': { en: 'DRESSING', ja: 'ドレッシング' },
     'その他': { en: 'EXTRAS', ja: 'その他' },
-    'DRINK/SOUP': { en: 'DRINK/SOUP', ja: 'ドリンク/スープ' },
+    'SOUP': { en: 'SOUP', ja: 'スープ' },
+    'DRINK': { en: 'DRINK', ja: 'ドリンク' },
     // 旧カテゴリ名（互換性のため）
     'ごはん': { en: 'RICE', ja: 'ごはん' },
     'サラダ': { en: 'SALAD', ja: 'サラダ' },
     'メイン': { en: 'MAIN', ja: 'メイン' },
     'サイド': { en: 'SIDE', ja: 'サイド' },
-    'スープ': { en: 'SOUP', ja: 'スープ' },
     'デザート': { en: 'DESSERT', ja: 'デザート' },
     '飲み物': { en: 'DRINK', ja: '飲み物' }
 };
 
 // カテゴリーの順序（フロー図の順序）
-const categoryOrder = ['主食', '副菜', '主菜', 'DRINK/SOUP'];
+const categoryOrder = ['主食', '副菜', '主菜', 'SOUP', 'DRINK'];
 
 // カテゴリ名を取得（マッピングがない場合は元の名前を使用）
 function getCategoryNames(category) {
@@ -484,7 +484,7 @@ function createDishButton(dish, category, dishesRow) {
     const calories = dish.calories || 0;
     const caloriesValue = document.createElement('span');
     caloriesValue.className = 'dish-button-calories-value';
-    caloriesValue.textContent = calories.toFixed(0);
+    caloriesValue.textContent = calories.toFixed(1);
     const caloriesUnit = document.createElement('span');
     caloriesUnit.className = 'dish-button-calories-unit';
     caloriesUnit.textContent = 'kcal';
@@ -508,7 +508,7 @@ function createDishButton(dish, category, dishesRow) {
     proteinValueContainer.className = 'pfc-value-container';
     const proteinValue = document.createElement('span');
     proteinValue.className = 'pfc-value';
-    proteinValue.textContent = protein.toFixed(1);
+    proteinValue.textContent = protein.toFixed(2);
     const proteinUnit = document.createElement('span');
     proteinUnit.className = 'pfc-unit';
     proteinUnit.textContent = 'g';
@@ -526,7 +526,7 @@ function createDishButton(dish, category, dishesRow) {
     fatValueContainer.className = 'pfc-value-container';
     const fatValue = document.createElement('span');
     fatValue.className = 'pfc-value';
-    fatValue.textContent = fat.toFixed(1);
+    fatValue.textContent = fat.toFixed(2);
     const fatUnit = document.createElement('span');
     fatUnit.className = 'pfc-unit';
     fatUnit.textContent = 'g';
@@ -544,7 +544,7 @@ function createDishButton(dish, category, dishesRow) {
     carbsValueContainer.className = 'pfc-value-container';
     const carbsValue = document.createElement('span');
     carbsValue.className = 'pfc-value';
-    carbsValue.textContent = carbs.toFixed(1);
+    carbsValue.textContent = carbs.toFixed(2);
     const carbsUnit = document.createElement('span');
     carbsUnit.className = 'pfc-unit';
     carbsUnit.textContent = 'g';
@@ -1188,8 +1188,11 @@ function updateCategoryFlow() {
     }
     
     // 除外するカテゴリー（DRINK/SOUPは表示するので除外リストから削除、ドレッシングも除外）
-    const excludedCategories = ['その他', '飲み物', 'スープ', 'デザート', 'ドレッシング'];
+    const excludedCategories = ['その他', '飲み物', 'デザート', 'ドレッシング'];
     const isExcludedCategory = (cat) => {
+        // categoryOrderに含まれるカテゴリは除外しない（DRINKとSOUPを確実に表示）
+        if (categoryOrder.includes(cat)) return false;
+        
         if (excludedCategories.includes(cat)) return true;
         const catNames = getCategoryNames(cat);
         return excludedCategories.some(excluded => {
@@ -1199,40 +1202,32 @@ function updateCategoryFlow() {
     };
     
     // カテゴリーを順序に従って並べ替え（categoryOrderに含まれるもののみ）
+    // categoryOrderの順序を確実に反映するため、順序通りに処理
     const orderedCategories = [];
-    const categoryOrderMap = {};
     
     // categoryOrderの各カテゴリーについて、実際のカテゴリー名をマッピング
     categoryOrder.forEach(orderCategory => {
         // 直接一致する場合
-        if (existingCategories.includes(orderCategory) && !isExcludedCategory(orderCategory)) {
+        if (existingCategories.includes(orderCategory)) {
+            // categoryOrderに含まれるカテゴリは確実に追加（除外チェックをスキップ）
             orderedCategories.push(orderCategory);
-            categoryOrderMap[orderCategory] = orderCategory;
         } else {
             // マッピングを確認（例：'主食' → 'ごはん'）
             const categoryNames = getCategoryNames(orderCategory);
             const matchingCategory = existingCategories.find(cat => {
+                // categoryOrderに含まれるカテゴリは除外しない
+                if (categoryOrder.includes(cat)) return true;
                 if (isExcludedCategory(cat)) return false;
                 const catNames = getCategoryNames(cat);
                 return catNames.en === categoryNames.en;
             });
             if (matchingCategory) {
                 orderedCategories.push(matchingCategory);
-                categoryOrderMap[matchingCategory] = orderCategory;
             }
         }
     });
     
     // 順序に含まれていないカテゴリーは追加しない（categoryOrderに含まれるもののみ表示）
-    
-    // orderedCategoriesが空の場合は、すべてのカテゴリーを表示（除外カテゴリー以外）
-    if (orderedCategories.length === 0) {
-        existingCategories.forEach(cat => {
-            if (!isExcludedCategory(cat)) {
-                orderedCategories.push(cat);
-            }
-        });
-    }
     
     // カテゴリーの順序に従ってフロー図を作成
     orderedCategories.forEach((category, index) => {
@@ -1603,12 +1598,12 @@ function updateFixedCalories(protein, fat, carbs, calories) {
     if (!fixedCaloriesValue || !fixedProteinValue || !fixedFatValue || !fixedCarbsValue) return;
     
     // PFCの値を更新
-    fixedProteinValue.textContent = protein.toFixed(1);
-    fixedFatValue.textContent = fat.toFixed(1);
-    fixedCarbsValue.textContent = carbs.toFixed(1);
+    fixedProteinValue.textContent = protein.toFixed(2);
+    fixedFatValue.textContent = fat.toFixed(2);
+    fixedCarbsValue.textContent = carbs.toFixed(2);
     
     // 総カロリーを更新
-    fixedCaloriesValue.textContent = calories.toFixed(0);
+    fixedCaloriesValue.textContent = calories.toFixed(1);
 }
 
 function updatePfcLabel(elementId, percent) {
