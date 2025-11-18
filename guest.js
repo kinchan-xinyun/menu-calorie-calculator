@@ -484,7 +484,7 @@ function createDishButton(dish, category, dishesRow) {
     const calories = dish.calories || 0;
     const caloriesValue = document.createElement('span');
     caloriesValue.className = 'dish-button-calories-value';
-    caloriesValue.textContent = calories.toFixed(0);
+    caloriesValue.textContent = calories.toFixed(1);
     const caloriesUnit = document.createElement('span');
     caloriesUnit.className = 'dish-button-calories-unit';
     caloriesUnit.textContent = 'kcal';
@@ -508,7 +508,7 @@ function createDishButton(dish, category, dishesRow) {
     proteinValueContainer.className = 'pfc-value-container';
     const proteinValue = document.createElement('span');
     proteinValue.className = 'pfc-value';
-    proteinValue.textContent = protein.toFixed(1);
+    proteinValue.textContent = protein.toFixed(2);
     const proteinUnit = document.createElement('span');
     proteinUnit.className = 'pfc-unit';
     proteinUnit.textContent = 'g';
@@ -526,7 +526,7 @@ function createDishButton(dish, category, dishesRow) {
     fatValueContainer.className = 'pfc-value-container';
     const fatValue = document.createElement('span');
     fatValue.className = 'pfc-value';
-    fatValue.textContent = fat.toFixed(1);
+    fatValue.textContent = fat.toFixed(2);
     const fatUnit = document.createElement('span');
     fatUnit.className = 'pfc-unit';
     fatUnit.textContent = 'g';
@@ -544,7 +544,7 @@ function createDishButton(dish, category, dishesRow) {
     carbsValueContainer.className = 'pfc-value-container';
     const carbsValue = document.createElement('span');
     carbsValue.className = 'pfc-value';
-    carbsValue.textContent = carbs.toFixed(1);
+    carbsValue.textContent = carbs.toFixed(2);
     const carbsUnit = document.createElement('span');
     carbsUnit.className = 'pfc-unit';
     carbsUnit.textContent = 'g';
@@ -1598,12 +1598,12 @@ function updateFixedCalories(protein, fat, carbs, calories) {
     if (!fixedCaloriesValue || !fixedProteinValue || !fixedFatValue || !fixedCarbsValue) return;
     
     // PFCの値を更新
-    fixedProteinValue.textContent = protein.toFixed(1);
-    fixedFatValue.textContent = fat.toFixed(1);
-    fixedCarbsValue.textContent = carbs.toFixed(1);
+    fixedProteinValue.textContent = protein.toFixed(2);
+    fixedFatValue.textContent = fat.toFixed(2);
+    fixedCarbsValue.textContent = carbs.toFixed(2);
     
     // 総カロリーを更新
-    fixedCaloriesValue.textContent = calories.toFixed(0);
+    fixedCaloriesValue.textContent = calories.toFixed(1);
 }
 
 function updatePfcLabel(elementId, percent) {
