@@ -91,6 +91,30 @@ function sanitizeFilename(filename) {
         .replace(/-+/g, '_');
 }
 
+// WebPサポートをチェック
+let supportsWebP = false;
+function checkWebPSupport() {
+    const elem = document.createElement('canvas');
+    if (elem.getContext && elem.getContext('2d')) {
+        return elem.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    }
+    return false;
+}
+
+// 画像パスをWebP対応にする関数
+function getOptimizedImagePath(imagePath) {
+    if (!imagePath || imagePath.startsWith('data:image')) {
+        return imagePath;
+    }
+    
+    // WebPサポートがある場合、拡張子を.webpに変更
+    if (supportsWebP && !imagePath.endsWith('.webp')) {
+        return imagePath.replace(/\.(png|jpg|jpeg)$/i, '.webp');
+    }
+    
+    return imagePath;
+}
+
 async function loadCSV() {
     try {
         const response = await fetch('menu.csv');
@@ -494,16 +518,33 @@ function createDishButton(dish, category, dishesRow) {
     const img = document.createElement('img');
     img.className = 'dish-button-img';
     
+    // 最初のカテゴリーの画像は eager で読み込み、それ以外は lazy
+    const categoryIndex = categoryOrder.indexOf(category);
+    if (categoryIndex <= 1) {
+        img.loading = 'eager';
+    } else {
+        img.loading = 'lazy';
+    }
+    img.decoding = 'async';
+    
     if (dish.image && dish.image.startsWith('data:image')) {
         img.src = dish.image; // Base64画像をそのまま使用
     } else if (dish.image) {
-        img.src = dish.image; // パスを使用
+        img.src = getOptimizedImagePath(dish.image); // WebP対応パスを使用
     } else {
-        img.src = `images/${sanitizeFilename(dish.dish)}.png`;
+        img.src = getOptimizedImagePath(`images/${sanitizeFilename(dish.dish)}.png`);
     }
     
     img.alt = dish.dish;
     img.onerror = function() {
+        // WebP読み込み失敗時は元の画像にフォールバック
+        if (img.src.endsWith('.webp')) {
+            const fallbackSrc = img.src.replace(/\.webp$/i, '.png');
+            if (img.src !== fallbackSrc) {
+                img.src = fallbackSrc;
+                return;
+            }
+        }
         img.style.display = 'none';
         const emoji = document.createElement('span');
         emoji.textContent = '🍽️';
@@ -1164,6 +1205,10 @@ function updateCategoryFlow() {
                 placeholderImg.alt = '未選択';
                 placeholderImg.className = 'category-flow-placeholder-image';
                 
+                // 遅延読み込みとデコード最適化
+                placeholderImg.loading = 'lazy';
+                placeholderImg.decoding = 'async';
+                
                 // 画像の読み込みを確実にする
                 placeholderImg.onload = function() {
                     this.style.display = 'block';
@@ -1285,6 +1330,11 @@ function updateCategoryFlow() {
                     imgWrapper.setAttribute('data-category', category);
                     
                     const img = document.createElement('img');
+                    
+                    // 遅延読み込みとデコード最適化
+                    img.loading = 'lazy';
+                    img.decoding = 'async';
+                    
                     if (dishData.image && dishData.image.startsWith('data:image')) {
                         img.src = dishData.image;
                     } else if (dishData.image) {
@@ -1339,6 +1389,10 @@ function updateCategoryFlow() {
             placeholderImg.alt = '未選択';
             placeholderImg.className = 'category-flow-placeholder-image';
             
+            // 遅延読み込みとデコード最適化
+            placeholderImg.loading = 'lazy';
+            placeholderImg.decoding = 'async';
+            
             // 画像の読み込みを確実にする
             placeholderImg.onload = function() {
                 this.style.display = 'block';
@@ -1388,6 +1442,10 @@ function updateSelectedDishesImages() {
         
         const img = document.createElement('img');
         img.className = 'selected-dish-image';
+        
+        // 遅延読み込みとデコード最適化
+        img.loading = 'lazy';
+        img.decoding = 'async';
         
         if (dish.image && dish.image.startsWith('data:image')) {
             img.src = dish.image;
@@ -1496,6 +1554,10 @@ function updateSelectedDishesList() {
         
         const img = document.createElement('img');
         img.className = 'selected-dish-item-image';
+        
+        // 遅延読み込みとデコード最適化
+        img.loading = 'lazy';
+        img.decoding = 'async';
         
         if (dish.image && dish.image.startsWith('data:image')) {
             img.src = dish.image;
@@ -1989,6 +2051,10 @@ function setupFixedPfcBarVisibility() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Page load started');
     
+    // WebPサポートをチェック
+    supportsWebP = checkWebPSupport();
+    console.log('WebP support:', supportsWebP);
+    
     // ハンバーガーメニューの設定
     setupHamburgerMenu();
     
@@ -2011,9 +2077,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 固定PFCバランスの表示制御を設定
     setupFixedPfcBarVisibility();
     
-    // プレースホルダー画像をプリロード
+    // 重要な画像をプリロード（プレースホルダーと最初のカテゴリーの画像）
     const preloadImage = new Image();
     preloadImage.src = 'images/unselected-dish.png';
+    
+    // 最初のカテゴリーの画像を先行読み込み
+    const firstCategoryDishes = nutritionData.filter(item => 
+        item.category === categoryOrder[0] || item.category === categoryOrder[1]
+    ).slice(0, 4); // 最初の4枚だけ
+    
+    firstCategoryDishes.forEach(dish => {
+        const preloadImg = new Image();
+        if (dish.image && !dish.image.startsWith('data:image')) {
+            preloadImg.src = dish.image;
+        }
+    });
     
     // フロー図を初期化（nutritionDataが読み込まれた後）
     // 画像のプリロードを待ってから初期化
