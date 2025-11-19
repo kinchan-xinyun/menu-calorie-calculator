@@ -271,7 +271,7 @@ function init() {
         // 「クリア」ボタン
         const clearButton = document.createElement('button');
         clearButton.className = 'clear-button';
-        clearButton.textContent = 'クリア';
+        clearButton.textContent = `【${category}】クリア`;
         clearButton.title = 'すべての選択を解除';
         
         const dishesRow = document.createElement('div');
