@@ -831,8 +831,8 @@ function addNewDish() {
 
 async function saveToFirestore(dish) {
     try {
-        // ドキュメントIDを生成（カテゴリー_料理名）
-        const docId = `${dish.category}_${dish.dish}`;
+        // ドキュメントIDを生成（料理名）
+        const docId = `${dish.dish}`;
         
         await db.collection('menuItems').doc(docId).set({
             category: dish.category,
@@ -889,8 +889,8 @@ function deleteDish(category, dish) {
 
 async function deleteFromFirestore(dish) {
     try {
-        // ドキュメントIDを生成（カテゴリー_料理名）
-        const docId = `${dish.category}_${dish.dish}`;
+        // ドキュメントIDを生成（料理名）
+        const docId = `${dish.dish}`;
         
         await db.collection('menuItems').doc(docId).delete();
         
@@ -929,7 +929,7 @@ function toggleDiscontinued(category, dish) {
 // Firestoreの販売状態を更新
 async function updateDishStatusOnFirestore(dish, isDiscontinued) {
     try {
-        const docId = `${dish.category}_${dish.dish}`;
+        const docId = `${dish.dish}`;
         const status = isDiscontinued ? '販売中止' : '販売中';
         
         console.log('Updating status in Firestore:', { docId, status });
