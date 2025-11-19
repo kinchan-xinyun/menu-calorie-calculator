@@ -499,7 +499,7 @@ function createDishButton(dish, category, dishesRow) {
     } else if (dish.image) {
         img.src = dish.image; // パスを使用
     } else {
-        img.src = `images/${sanitizeFilename(dish.dish)}.png`;
+        img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
     }
     
     img.alt = dish.dish;
@@ -1175,7 +1175,7 @@ function updateCategoryFlow() {
                 };
                 
                 // 画像のsrcを設定（onload/onerrorの後に設定）
-                placeholderImg.src = './images/unselected-dish.png';
+                placeholderImg.src = './images/unselected-dish.webp';
 
                 // ロード完了時
                 placeholderImg.onload = function() {
@@ -1290,7 +1290,7 @@ function updateCategoryFlow() {
                     } else if (dishData.image) {
                         img.src = dishData.image;
                     } else {
-                        img.src = `images/${sanitizeFilename(dishData.dish)}.png`;
+                        img.src = `images/${sanitizeFilename(dishData.dish)}.webp`;
                     }
                     img.alt = dishData.dish;
                     img.className = 'category-flow-image';
@@ -1350,7 +1350,7 @@ function updateCategoryFlow() {
             };
             
             // 画像のsrcを設定（onload/onerrorの後に設定）
-            placeholderImg.src = 'images/unselected-dish.png';
+            placeholderImg.src = 'images/unselected-dish.webp';
             
             placeholder.appendChild(placeholderImg);
             dishImageContainer.appendChild(placeholder);
@@ -1394,7 +1394,7 @@ function updateSelectedDishesImages() {
         } else if (dish.image) {
             img.src = dish.image;
         } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.png`;
+            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
         }
         
         img.alt = dish.dish;
@@ -1502,7 +1502,7 @@ function updateSelectedDishesList() {
         } else if (dish.image) {
             img.src = dish.image;
         } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.png`;
+            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
         }
         
         img.alt = dish.dish;
@@ -2013,7 +2013,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // プレースホルダー画像をプリロード
     const preloadImage = new Image();
-    preloadImage.src = 'images/unselected-dish.png';
+    preloadImage.src = 'images/unselected-dish.webp';
     
     // フロー図を初期化（nutritionDataが読み込まれた後）
     // 画像のプリロードを待ってから初期化

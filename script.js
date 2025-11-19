@@ -532,7 +532,7 @@ function createDishButton(dish, category, dishesRow) {
     } else if (dish.image) {
         img.src = getOptimizedImagePath(dish.image); // WebP対応パスを使用
     } else {
-        img.src = getOptimizedImagePath(`images/${sanitizeFilename(dish.dish)}.png`);
+        img.src = getOptimizedImagePath(`images/${sanitizeFilename(dish.dish)}.webp`);
     }
     
     img.alt = dish.dish;
@@ -1220,7 +1220,7 @@ function updateCategoryFlow() {
                 };
                 
                 // 画像のsrcを設定（onload/onerrorの後に設定）
-                placeholderImg.src = './images/unselected-dish.png';
+                placeholderImg.src = './images/unselected-dish.webp';
 
                 // ロード完了時
                 placeholderImg.onload = function() {
@@ -1340,7 +1340,7 @@ function updateCategoryFlow() {
                     } else if (dishData.image) {
                         img.src = dishData.image;
                     } else {
-                        img.src = `images/${sanitizeFilename(dishData.dish)}.png`;
+                        img.src = `images/${sanitizeFilename(dishData.dish)}.webp`;
                     }
                     img.alt = dishData.dish;
                     img.className = 'category-flow-image';
@@ -1404,7 +1404,7 @@ function updateCategoryFlow() {
             };
             
             // 画像のsrcを設定（onload/onerrorの後に設定）
-            placeholderImg.src = 'images/unselected-dish.png';
+            placeholderImg.src = 'images/unselected-dish.webp';
             
             placeholder.appendChild(placeholderImg);
             dishImageContainer.appendChild(placeholder);
@@ -1452,7 +1452,7 @@ function updateSelectedDishesImages() {
         } else if (dish.image) {
             img.src = dish.image;
         } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.png`;
+            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
         }
         
         img.alt = dish.dish;
@@ -1564,7 +1564,7 @@ function updateSelectedDishesList() {
         } else if (dish.image) {
             img.src = dish.image;
         } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.png`;
+            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
         }
         
         img.alt = dish.dish;
@@ -2079,7 +2079,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 重要な画像をプリロード（プレースホルダーと最初のカテゴリーの画像）
     const preloadImage = new Image();
-    preloadImage.src = 'images/unselected-dish.png';
+    preloadImage.src = 'images/unselected-dish.webp';
     
     // 最初のカテゴリーの画像を先行読み込み
     const firstCategoryDishes = nutritionData.filter(item => 
