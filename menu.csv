@@ -1,27 +1,27 @@
-,料理名,タンパク質,脂質,炭水化物,総カロリー,画像パス,販売状態
-主食,SALAD PLATE,0.48,0.06,1.55,7,images/mix_salad.png,販売中
-主食,RICE PLATE,3.21,0.54,37.46,167,images/fifteen_grain_rice.png,販売中
-主食,RICE + SALAD PLATE,2.09,0.33,20.28,90.5,images/half.png,販売中
-ドレッシング,焙煎胡麻ドレッシング,1.1,1.7,6.2,44,images/home_brew_sesame_dressing.png,販売中
-ドレッシング,和風オニオンドレッシング,0.4,0.05,2,11,images/fragrant_onion_dressing.png,販売中
-ドレッシング,スパイシラチャードレッシング,0.9,0.45,3.3,22,images/spicy_lachacha_dressing.png,販売中
-副菜,5種きのこのアンチョビマリネ,1,0.47,1.8,13,images/three_mushroom_ancho_marinade.png,販売中
-副菜,オクラと長芋の出汁胡麻和え,0.7,0.1,3,14,images/okra_and_long_yam_neranner_sesame_dressing.png,販売中
-副菜,塩昆布の和風キャロットラペ,0.25,0.57,4.07,21,images/salt_kelp_and_roasted_carrot_lap.png,販売中
-副菜,中華風ふわふわキクラゲ玉子,2.6,2.3,1.1,36,images/soft_sea_urchin_tamago.png,販売中
-副菜,メープルナッツとかぼちゃのご褒美サラダ,1.7,1.6,11,63,images/maple_nuts_and_pumpkin_gourmet_salad.png,販売中
-副菜,旨辛痺れ麻辣春雨,0.25,0.33,6.1,28,images/spicy_malaxi_spring_rain.png,販売中
-副菜,スパイスローストチキン,12.5,1.09,2.3,76,images/salt_kelp_roasted_chicken.png,販売中
-副菜,塩麹仕立てのゆで卵,6.3,5.2,0.8,78,images/salt_kelp_poached_egg.png,販売中
-主菜,やわらか鶏のすりおろし生姜焼き,20.2,2,18.9,176,images/soft_chicken_ginger_roast.png,販売中
-主菜,照り焼き蓮根つくねバーグ,20.9,3.1,17.2,209.5,images/teriyaki_pork_hamburger.png,販売中
-主菜,バルサミコ香るたらの甘酢あんかけ,16.9,0.7,12.6,128,images/tara_vinegar_anakake.png,販売中
-主菜,トマトと香味野菜のチキンキーマカレー,26.6,7.1,9.7,225,images/spice_curry.png,販売中
-DRINK/SOUP,アイスコーヒー,0,0,0,0,images/iced_coffee.png,販売中
-DRINK/SOUP,アイスルイボスティー,0,0,0,0,images/iced_rooibos_tea.png,販売中
-DRINK/SOUP,アイス黒烏龍茶,0,0,0,0,images/iced_black_oolong_tea.png,販売中
-DRINK/SOUP,スープ,0,0,0,0,images/soup.png,販売中
-DRINK/SOUP,ホットコーヒー,0,0,0,0,images/hot_coffee.png,販売中
-DRINK/SOUP,ホットルイボスティー,0,0,0,0,images/hot_rooibos_tea.png,販売中
-DRINK/SOUP,ホット黒烏龍茶,0,0,0,0,images/hot_black_oolong_tea.png,販売中
-その他,その他,0,0,0,0,images/other.jpg,販売中
+カテゴリー,料理名,タンパク質,脂質,炭水化物,総カロリー,画像パス,販売状態
+主食,SALAD PLATE,0.82,0.10,2.66,12.0,images/mix_salad.png,販売中
+主食,RICE PLATE,5.25,0.88,61.25,273.0,images/fifteen_grain_rice.png,販売中
+主食,RICE + SALAD PLATE,3.76,0.61,39.23,175.0,images/half.png,販売中
+ドレッシング,焙煎胡麻ドレッシング,1.10,1.70,6.20,44.0,images/home_brew_sesame_dressing.png,販売中
+ドレッシング,和風オニオンドレッシング,0.40,0.05,2.00,11.0,images/fragrant_onion_dressing.png,販売中
+ドレッシング,スパイシラチャードレッシング,0.90,0.45,3.30,22.0,images/spicy_lachacha_dressing.png,販売中
+副菜,5種きのこのアンチョビマリネ,1.00,0.47,1.80,13.0,images/three_mushroom_ancho_marinade.png,販売中
+副菜,オクラと長芋の出汁胡麻和え,0.70,0.10,3.00,14.0,images/okra_and_long_yam_neranner_sesame_dressing.png,販売中
+副菜,塩昆布の和風キャロットラペ,0.25,0.57,4.07,21.0,images/salt_kelp_and_roasted_carrot_lap.png,販売中
+副菜,中華風ふわふわキクラゲ玉子,2.60,2.30,1.10,36.0,images/soft_sea_urchin_tamago.png,販売中
+副菜,メープルナッツとかぼちゃのご褒美サラダ,1.70,1.60,11.00,63.0,images/maple_nuts_and_pumpkin_gourmet_salad.png,販売中
+副菜,旨辛痺れ麻辣春雨,0.25,0.33,6.10,28.0,images/spicy_malaxi_spring_rain.png,販売中
+副菜,スパイスローストチキン,12.50,1.09,2.30,76.0,images/salt_kelp_roasted_chicken.png,販売中
+副菜,塩麹仕立てのゆで卵,6.30,5.20,0.80,78.0,images/salt_kelp_poached_egg.png,販売中
+主菜,やわらか鶏のすりおろし生姜焼き,20.20,2.00,18.90,176.0,images/soft_chicken_ginger_roast.png,販売中
+主菜,照り焼き蓮根つくねバーグ,20.90,3.10,17.20,209.5,images/teriyaki_pork_hamburger.png,販売中
+主菜,バルサミコ香るたらの甘酢あんかけ,16.90,0.70,12.60,128.0,images/tara_vinegar_anakake.png,販売中
+主菜,トマトと香味野菜のチキンキーマカレー,26.60,7.10,9.70,225.0,images/spice_curry.png,販売中
+SOUP,ホッとスープ,1.44,1.44,10.32,60.0,images/soup.png,販売中
+DRINK,アイスコーヒー,0.20,0.00,0.70,4.0,images/iced_coffee.png,販売中
+DRINK,アイスルイボスティー,0.00,0.00,0.00,0.0,images/iced_rooibos_tea.png,販売中
+DRINK,アイス黒烏龍茶,0.00,0.00,0.00,0.0,images/iced_black_oolong_tea.png,販売中
+DRINK,ホットコーヒー,0.20,0.00,0.70,4.0,images/hot_coffee.png,販売中
+DRINK,ホットルイボスティー,0.00,0.00,0.00,0.0,images/hot_rooibos_tea.png,販売中
+DRINK,ホット黒烏龍茶,0.00,0.00,0.00,0.0,images/hot_black_oolong_tea.png,販売中
+その他,プロテインチョコバー,10.00,5.10,5.40,107.0,images/food_protein_bar.png,販売中

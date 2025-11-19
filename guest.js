@@ -12,8 +12,19 @@ const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
 
-// Google Apps Script のURL
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWub4dZMxlzw7klDW4kcRNLI8P1Y-8-bKQRzyvde0EO-StSnx53j5ZV8Yi_4qLhCc_CQ/exec';
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyDLT6aZmgZrp7rN3xQV8K0h7V0c9gj1h1M",
+    authDomain: "menu-calorie-calculator-6934f.firebaseapp.com",
+    projectId: "menu-calorie-calculator-6934f",
+    storageBucket: "menu-calorie-calculator-6934f.firebasestorage.app",
+    messagingSenderId: "428776906549",
+    appId: "1:428776906549:web:5a5f0e4c3e8e8e8e8e8e8e"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 // カテゴリ名のマッピング（日本語 → 英語）
 const categoryNameMap = {
@@ -33,8 +44,11 @@ const categoryNameMap = {
     '飲み物': { en: 'DRINK', ja: '飲み物' }
 };
 
-// カテゴリーの順序（フロー図の順序）
-const categoryOrder = ['主食', '副菜', '主菜', 'SOUP', 'DRINK'];
+// カテゴリーの順序（メイン画面とナビゲーションの順序）
+const categoryOrder = ['主食', 'ドレッシング', '副菜', '主菜', 'SOUP', 'DRINK', 'その他'];
+
+// フロー図の順序（元の順序を維持）
+const categoryFlowOrder = ['主食', '副菜', '主菜', 'SOUP', 'DRINK'];
 
 // カテゴリ名を取得（マッピングがない場合は元の名前を使用）
 function getCategoryNames(category) {
@@ -116,47 +130,50 @@ function parseCSV(csvText) {
     }
 }
 
-// ==================== Google Sheets から読み込み ====================
-async function loadFromGoogleSheets() {
+// ==================== Firestore から読み込み ====================
+async function loadFromFirestore() {
     try {
-        console.log('Loading data from Google Sheets...');
-        // GETリクエストではCORSの問題は少ないが、念のためfetchオプションを追加
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-            method: 'GET',
-            mode: 'cors'
-        });
+        console.log('Loading data from Firestore...');
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const snapshot = await db.collection('menuItems').get();
         
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-            nutritionData = data;
-            
-            // ★ 修正点: DBの最新状態を正確に反映するため、まずリセットする
+        if (!snapshot.empty) {
+            nutritionData = [];
             discontinuedDishes = {}; 
             
-            // Google Sheetsから販売状態を反映
-            data.forEach(item => {
-                if (item.status === '販売中止') {
-                    if (!discontinuedDishes[item.category]) {
-                        discontinuedDishes[item.category] = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                nutritionData.push({
+                    id: doc.id,
+                    category: data.category,
+                    dish: data.dishName || data.dish,  // Firestoreのフィールド名に対応
+                    protein: data.protein,
+                    fat: data.fat,
+                    carbs: data.carbohydrates || data.carbs,  // Firestoreのフィールド名に対応
+                    calories: data.totalCalories || data.calories,  // Firestoreのフィールド名に対応
+                    image: data.imageUrl || data.image || '',  // Firestoreのフィールド名に対応
+                    status: data.status || '販売中'
+                });
+                
+                // 販売中止の料理を記録
+                if (data.status === '販売中止') {
+                    if (!discontinuedDishes[data.category]) {
+                        discontinuedDishes[data.category] = [];
                     }
-                    if (!discontinuedDishes[item.category].includes(item.dish)) {
-                        discontinuedDishes[item.category].push(item.dish);
+                    const dishName = data.dishName || data.dish;
+                    if (!discontinuedDishes[data.category].includes(dishName)) {
+                        discontinuedDishes[data.category].push(dishName);
                     }
                 }
             });
             
-            console.log('Data loaded from Google Sheets:', data.length, 'items');
+            console.log('Data loaded from Firestore:', nutritionData.length, 'items');
         } else {
-            console.warn('No data from Google Sheets, using CSV fallback');
+            console.warn('No data from Firestore, using CSV fallback');
             await loadCSV();
         }
     } catch (error) {
-        console.warn('Google Sheetsからの読み込みに失敗。CSVから読み込みます:', error);
+        console.error('Firestoreからの読み込みに失敗。CSVから読み込みます:', error);
         await loadCSV();
     }
 }
@@ -189,9 +206,24 @@ async function updateDishStatusOnGoogleSheets_OLD(payload) {
 function init() {
     const container = document.getElementById('categories-container');
     
-    const categories = [...new Set(nutritionData.map(item => item.category))];
+    // 全カテゴリーを取得
+    const allCategories = [...new Set(nutritionData.map(item => item.category))];
     
-    categories.forEach((category, index) => {
+    // categoryOrderの順序に従ってカテゴリーを並べ替え
+    const orderedCategories = [];
+    categoryOrder.forEach(orderCat => {
+        if (allCategories.includes(orderCat)) {
+            orderedCategories.push(orderCat);
+        }
+    });
+    // categoryOrderにないカテゴリーを最後に追加
+    allCategories.forEach(cat => {
+        if (!orderedCategories.includes(cat)) {
+            orderedCategories.push(cat);
+        }
+    });
+    
+    orderedCategories.forEach((category, index) => {
         const dishes = nutritionData.filter(item => item.category === category);
         
         if (dishes.length === 0) return;
@@ -296,7 +328,7 @@ function init() {
         setupDishCenterObserver(dishesRow);
         
         // カテゴリ間に矢印を追加（最後のカテゴリ以外）
-        if (index < categories.length - 1) {
+        if (index < orderedCategories.length - 1) {
             const arrow = document.createElement('div');
             arrow.className = 'category-arrow';
             container.appendChild(arrow);
@@ -314,9 +346,24 @@ function initCategoryNavigation() {
     const navContainer = document.getElementById('categoryNavigation');
     if (!navContainer) return;
     
-    const categories = [...new Set(nutritionData.map(item => item.category))];
+    // 全カテゴリーを取得
+    const allCategories = [...new Set(nutritionData.map(item => item.category))];
     
-    categories.forEach(category => {
+    // categoryOrderの順序に従ってカテゴリーを並べ替え（メイン画面と同じ順序）
+    const orderedCategories = [];
+    categoryOrder.forEach(orderCat => {
+        if (allCategories.includes(orderCat)) {
+            orderedCategories.push(orderCat);
+        }
+    });
+    // categoryOrderにないカテゴリーを最後に追加
+    allCategories.forEach(cat => {
+        if (!orderedCategories.includes(cat)) {
+            orderedCategories.push(cat);
+        }
+    });
+    
+    orderedCategories.forEach(category => {
         const categoryNames = getCategoryNames(category);
         const navItem = document.createElement('button');
         navItem.className = 'category-nav-item';
@@ -765,8 +812,8 @@ function addNewDish() {
     nutritionData.push(newDish);
     customDishes[currentCategory].push(newDish);
     
-    // Google Sheetsに追加
-    saveToGoogleSheets(newDish);
+    // Firestoreに追加
+    saveToFirestore(newDish);
     
     // UIに追加
     const categoryRow = document.querySelector(`[data-category="${currentCategory}"]`);
@@ -782,32 +829,26 @@ function addNewDish() {
     modal.classList.remove('show');
 }
 
-async function saveToGoogleSheets(dish) {
+async function saveToFirestore(dish) {
     try {
-        const payload = { ...dish, action: 'add' }; // 新規追加アクションを設定
+        // ドキュメントIDを生成（カテゴリー_料理名）
+        const docId = `${dish.category}_${dish.dish}`;
         
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
+        await db.collection('menuItems').doc(docId).set({
+            category: dish.category,
+            dishName: dish.dish,  // 内部的には dish.dish だが、Firestoreには dishName として保存
+            protein: dish.protein,
+            fat: dish.fat,
+            carbohydrates: dish.carbs,  // 内部的には carbs だが、Firestoreには carbohydrates として保存
+            totalCalories: dish.calories,  // 内部的には calories だが、Firestoreには totalCalories として保存
+            imageUrl: dish.image || '',  // 内部的には image だが、Firestoreには imageUrl として保存
+            status: '販売中'
         });
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('GAS returned HTTP error:', response.status, errorText);
-            throw new Error(`GASサーバーからHTTPエラーが返されました: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        
-        if (result.success === false) {
-            console.error('GAS returned application error:', result.error);
-            throw new Error(`GASアプリケーショエラー: ${result.error}`);
-        }
-        
-        console.log('Dish saved to Google Sheets:', result);
+        console.log('Dish saved to Firestore:', dish);
     } catch (error) {
-        console.error('Google Sheetsへの保存に失敗しました:', error);
-        alert('Google Sheetsへの保存に失敗しました（ローカルには保存されています）: ' + error.message);
+        console.error('Firestoreへの保存に失敗しました:', error);
+        alert('Firestoreへの保存に失敗しました（ローカルには保存されています）: ' + error.message);
     }
 }
 
@@ -837,8 +878,8 @@ function deleteDish(category, dish) {
         discontinuedDishes[category] = discontinuedDishes[category].filter(d => d !== dish.dish);
     }
     
-    // Google Sheetsから削除
-    deleteFromGoogleSheets(dish);
+    // Firestoreから削除
+    deleteFromFirestore(dish);
     
     saveToLocalStorage();
     
@@ -846,33 +887,17 @@ function deleteDish(category, dish) {
     location.reload();
 }
 
-async function deleteFromGoogleSheets(dish) {
+async function deleteFromFirestore(dish) {
     try {
-        const payload = {
-            action: 'delete',
-            dish: dish.dish,
-            category: dish.category
-        };
+        // ドキュメントIDを生成（カテゴリー_料理名）
+        const docId = `${dish.category}_${dish.dish}`;
         
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        await db.collection('menuItems').doc(docId).delete();
         
-        if (!response.ok) {
-            throw new Error(`GASサーバーからHTTPエラーが返されました: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        
-        if (result.success === false) {
-            throw new Error(`GASアプリケーショエラー: ${result.error}`);
-        }
-        
-        console.log('Dish deleted from Google Sheets:', result);
+        console.log('Dish deleted from Firestore:', dish);
     } catch (error) {
-        console.error('Google Sheetsからの削除に失敗しました:', error);
-        alert('Google Sheetsからの削除に失敗しました: ' + error.message);
+        console.error('Firestoreからの削除に失敗しました:', error);
+        alert('Firestoreからの削除に失敗しました: ' + error.message);
     }
 }
 
@@ -887,11 +912,11 @@ function toggleDiscontinued(category, dish) {
     if (isDiscontinued) {
         // 販売中止を解除
         discontinuedDishes[category] = discontinuedDishes[category].filter(d => d !== dish.dish);
-        updateDishStatusOnGoogleSheets(dish, false);
+        updateDishStatusOnFirestore(dish, false);
     } else {
         // 販売中止に設定
         discontinuedDishes[category].push(dish.dish);
-        updateDishStatusOnGoogleSheets(dish, true);
+        updateDishStatusOnFirestore(dish, true);
         // 選択されている場合は選択解除
         selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
     }
@@ -901,51 +926,45 @@ function toggleDiscontinued(category, dish) {
     // location.reload(); // ロードはGoogle Sheetsの反映を待ってから行うのが望ましい
 }
 
-// Google Sheetsの販売状態を更新 (修正版)
-async function updateDishStatusOnGoogleSheets(dish, isDiscontinued) {
+// Firestoreの販売状態を更新
+async function updateDishStatusOnFirestore(dish, isDiscontinued) {
     try {
-        const payload = {
-            action: 'updateStatus',
-            dish: dish.dish,
-            category: dish.category,
-            status: isDiscontinued ? '販売中止' : '販売中'
-        };
+        const docId = `${dish.category}_${dish.dish}`;
+        const status = isDiscontinued ? '販売中止' : '販売中';
         
-        console.log('Sending to Google Sheets:', payload);
+        console.log('Updating status in Firestore:', { docId, status });
         
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-            method: 'POST',
-            // Content-Type を text/plain に変更することでプリフライトを回避
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8', 
-            },
-            body: JSON.stringify(payload)
-        });
+        // まず、ドキュメントが存在するか確認
+        const docRef = db.collection('menuItems').doc(docId);
+        const docSnapshot = await docRef.get();
         
-        // 1. HTTPエラーチェック
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('GAS returned HTTP error:', response.status, errorText);
-            throw new Error(`GASサーバーからHTTPエラーが返されました: ${response.status}`);
+        if (docSnapshot.exists) {
+            // ドキュメントが存在する場合は更新
+            await docRef.update({
+                status: status
+            });
+        } else {
+            // ドキュメントが存在しない場合は、完全なデータで作成
+            await docRef.set({
+                category: dish.category,
+                dishName: dish.dish,
+                protein: dish.protein || 0,
+                fat: dish.fat || 0,
+                carbohydrates: dish.carbs || 0,
+                totalCalories: dish.calories || 0,
+                imageUrl: dish.image || '',
+                status: status
+            });
         }
         
-        // 2. GASのJSONレスポンスを解析
-        const result = await response.json();
-        
-        // 3. GASアプリケーションエラーチェック
-        if (result.success === false) {
-            console.error('GAS returned application error:', result.error);
-            throw new Error(`GASアプリケーショエラー: ${result.error}`);
-        }
-        
-        console.log('Dish status updated on Google Sheets:', result);
+        console.log('Dish status updated in Firestore');
         
         // 成功した場合のみUIをリロードし、変更を反映
         location.reload(); 
         
     } catch (error) {
-        console.error('Google Sheetsへの状態更新に失敗しました:', error);
-        alert('Google Sheetsへの更新に失敗しました: ' + error.message);
+        console.error('Firestoreへの状態更新に失敗しました:', error);
+        alert('Firestoreへの更新に失敗しました: ' + error.message);
         
         // 失敗した場合、ユーザーの意図した状態に戻す
         // (discontinuedDishesのローカル状態をロールバックする処理は複雑なので、今回はalertで対応)
@@ -1119,10 +1138,10 @@ function updateCategoryFlow() {
         existingCategories = [...new Set(nutritionData.map(item => item.category))];
     }
     
-    // カテゴリーが存在しない場合でも、categoryOrderに基づいてプレースホルダーを表示
+    // カテゴリーが存在しない場合でも、categoryFlowOrderに基づいてプレースホルダーを表示
     if (existingCategories.length === 0) {
-        // categoryOrderに基づいてプレースホルダーを表示
-        categoryOrder.forEach((category, index) => {
+        // categoryFlowOrderに基づいてプレースホルダーを表示
+        categoryFlowOrder.forEach((category, index) => {
             const categoryItem = document.createElement('div');
             categoryItem.className = 'category-flow-item';
             categoryItem.setAttribute('data-category', category);
@@ -1176,7 +1195,7 @@ function updateCategoryFlow() {
             categoryItem.appendChild(dishImageContainer);
             container.appendChild(categoryItem);
             
-            if (index < categoryOrder.length - 1) {
+            if (index < categoryFlowOrder.length - 1) {
                 const arrow = document.createElement('div');
                 arrow.className = 'category-flow-arrow';
                 arrow.textContent = '→';
@@ -1187,11 +1206,11 @@ function updateCategoryFlow() {
         return;
     }
     
-    // 除外するカテゴリー（DRINK/SOUPは表示するので除外リストから削除、ドレッシングも除外）
-    const excludedCategories = ['その他', '飲み物', 'デザート', 'ドレッシング'];
+    // 除外するカテゴリー（categoryFlowOrderに含まれるものは表示する）
+    const excludedCategories = ['飲み物', 'デザート', 'ドレッシング', 'その他'];
     const isExcludedCategory = (cat) => {
-        // categoryOrderに含まれるカテゴリは除外しない（DRINKとSOUPを確実に表示）
-        if (categoryOrder.includes(cat)) return false;
+        // categoryFlowOrderに含まれるカテゴリは除外しない（DRINKとSOUPを確実に表示）
+        if (categoryFlowOrder.includes(cat)) return false;
         
         if (excludedCategories.includes(cat)) return true;
         const catNames = getCategoryNames(cat);
@@ -1201,22 +1220,22 @@ function updateCategoryFlow() {
         });
     };
     
-    // カテゴリーを順序に従って並べ替え（categoryOrderに含まれるもののみ）
-    // categoryOrderの順序を確実に反映するため、順序通りに処理
+    // カテゴリーを順序に従って並べ替え（categoryFlowOrderに含まれるもののみ）
+    // categoryFlowOrderの順序を確実に反映するため、順序通りに処理
     const orderedCategories = [];
     
-    // categoryOrderの各カテゴリーについて、実際のカテゴリー名をマッピング
-    categoryOrder.forEach(orderCategory => {
+    // categoryFlowOrderの各カテゴリーについて、実際のカテゴリー名をマッピング
+    categoryFlowOrder.forEach(orderCategory => {
         // 直接一致する場合
         if (existingCategories.includes(orderCategory)) {
-            // categoryOrderに含まれるカテゴリは確実に追加（除外チェックをスキップ）
+            // categoryFlowOrderに含まれるカテゴリは確実に追加（除外チェックをスキップ）
             orderedCategories.push(orderCategory);
         } else {
             // マッピングを確認（例：'主食' → 'ごはん'）
             const categoryNames = getCategoryNames(orderCategory);
             const matchingCategory = existingCategories.find(cat => {
-                // categoryOrderに含まれるカテゴリは除外しない
-                if (categoryOrder.includes(cat)) return true;
+                // categoryFlowOrderに含まれるカテゴリは除外しない
+                if (categoryFlowOrder.includes(cat)) return true;
                 if (isExcludedCategory(cat)) return false;
                 const catNames = getCategoryNames(cat);
                 return catNames.en === categoryNames.en;
@@ -1227,7 +1246,7 @@ function updateCategoryFlow() {
         }
     });
     
-    // 順序に含まれていないカテゴリーは追加しない（categoryOrderに含まれるもののみ表示）
+    // 順序に含まれていないカテゴリーは追加しない（categoryFlowOrderに含まれるもののみ表示）
     
     // カテゴリーの順序に従ってフロー図を作成
     orderedCategories.forEach((category, index) => {
@@ -1975,8 +1994,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 画像カルーセルは削除（単一画像に変更）
     
-    // Google Sheetsから読み込み
-    await loadFromGoogleSheets();
+    // Firestoreから読み込み
+    await loadFromFirestore();
     
     loadFromLocalStorage();
     checkForCacheClean();
