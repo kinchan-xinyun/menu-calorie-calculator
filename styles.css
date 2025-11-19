@@ -318,7 +318,7 @@ body {
     border: 2px solid var(--border);
     border-radius: 12px;
     background:var(--soft-yellow);
-    color: #92400e;
+    color: var(--text-dark);
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
@@ -1073,7 +1073,7 @@ body {
     border: 2px solid var(--border);
     border-radius: 12px;
     background: var(--soft-yellow);
-    color: #92400e;
+    color: var(--text-dark);
     font-size: 14px;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
@@ -1100,7 +1100,7 @@ body {
     border: 2px solid var(--border);
     border-radius: 12px;
     background:var(--soft-yellow);
-    color: #92400e;
+    color: var(--text-dark);
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
