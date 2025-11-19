@@ -146,30 +146,35 @@
     <!-- 固定表示のPFCバランス -->
     <div id="fixedPfcBar" class="fixed-pfc-bar">
         <div class="fixed-pfc-content">
-            <div class="fixed-calories-container">
-                <div class="fixed-calories-display" id="fixed-calories-display">
-                    <div class="fixed-pfc-values">
-                        <div class="fixed-pfc-item">
-                            <span class="fixed-pfc-label">P</span>
-                            <span class="fixed-pfc-value" id="fixed-protein-value">0</span>
-                            <span class="fixed-pfc-unit">g</span>
+            <div class="fixed-calories-row">
+                <div class="fixed-calories-container">
+                    <div class="fixed-calories-display" id="fixed-calories-display">
+                        <div class="fixed-pfc-values">
+                            <div class="fixed-pfc-item">
+                                <span class="fixed-pfc-label">P</span>
+                                <span class="fixed-pfc-value" id="fixed-protein-value">0</span>
+                                <span class="fixed-pfc-unit">g</span>
+                            </div>
+                            <div class="fixed-pfc-item">
+                                <span class="fixed-pfc-label">F</span>
+                                <span class="fixed-pfc-value" id="fixed-fat-value">0</span>
+                                <span class="fixed-pfc-unit">g</span>
+                            </div>
+                            <div class="fixed-pfc-item">
+                                <span class="fixed-pfc-label">C</span>
+                                <span class="fixed-pfc-value" id="fixed-carbs-value">0</span>
+                                <span class="fixed-pfc-unit">g</span>
+                            </div>
                         </div>
-                        <div class="fixed-pfc-item">
-                            <span class="fixed-pfc-label">F</span>
-                            <span class="fixed-pfc-value" id="fixed-fat-value">0</span>
-                            <span class="fixed-pfc-unit">g</span>
+                        <div class="fixed-calories-total">
+                            <span class="fixed-calories-value" id="fixed-calories-value">0</span>
+                            <span class="fixed-calories-unit">kcal</span>
                         </div>
-                        <div class="fixed-pfc-item">
-                            <span class="fixed-pfc-label">C</span>
-                            <span class="fixed-pfc-value" id="fixed-carbs-value">0</span>
-                            <span class="fixed-pfc-unit">g</span>
-                        </div>
-                    </div>
-                    <div class="fixed-calories-total">
-                        <span class="fixed-calories-value" id="fixed-calories-value">0</span>
-                        <span class="fixed-calories-unit">kcal</span>
                     </div>
                 </div>
+                <button class="clear-all-button" id="clearAllButton">
+                    <span class="clear-all-text">クリア</span>
+                </button>
             </div>
             <div id="categoryFlow" class="category-flow"></div>
             <div id="selectedDishesImages" class="selected-dishes-images"></div>

@@ -91,30 +91,6 @@ function sanitizeFilename(filename) {
         .replace(/-+/g, '_');
 }
 
-// WebPサポートをチェック
-let supportsWebP = false;
-function checkWebPSupport() {
-    const elem = document.createElement('canvas');
-    if (elem.getContext && elem.getContext('2d')) {
-        return elem.toDataURL('image/webp').indexOf('data:image/webp') === 0;
-    }
-    return false;
-}
-
-// 画像パスをWebP対応にする関数
-function getOptimizedImagePath(imagePath) {
-    if (!imagePath || imagePath.startsWith('data:image')) {
-        return imagePath;
-    }
-    
-    // WebPサポートがある場合、拡張子を.webpに変更
-    if (supportsWebP && !imagePath.endsWith('.webp')) {
-        return imagePath.replace(/\.(png|jpg|jpeg)$/i, '.webp');
-    }
-    
-    return imagePath;
-}
-
 async function loadCSV() {
     try {
         const response = await fetch('menu.csv');
@@ -361,6 +337,7 @@ function init() {
     
     setupModal();
     initCategoryNavigation();
+    setupClearAllButton();
     
     // フロー図を初期化
     updateCategoryFlow();
@@ -518,33 +495,16 @@ function createDishButton(dish, category, dishesRow) {
     const img = document.createElement('img');
     img.className = 'dish-button-img';
     
-    // 最初のカテゴリーの画像は eager で読み込み、それ以外は lazy
-    const categoryIndex = categoryOrder.indexOf(category);
-    if (categoryIndex <= 1) {
-        img.loading = 'eager';
-    } else {
-        img.loading = 'lazy';
-    }
-    img.decoding = 'async';
-    
     if (dish.image && dish.image.startsWith('data:image')) {
         img.src = dish.image; // Base64画像をそのまま使用
     } else if (dish.image) {
-        img.src = getOptimizedImagePath(dish.image); // WebP対応パスを使用
+        img.src = dish.image; // パスを使用
     } else {
-        img.src = getOptimizedImagePath(`images/${sanitizeFilename(dish.dish)}.webp`);
+        img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
     }
     
     img.alt = dish.dish;
     img.onerror = function() {
-        // WebP読み込み失敗時は元の画像にフォールバック
-        if (img.src.endsWith('.webp')) {
-            const fallbackSrc = img.src.replace(/\.webp$/i, '.png');
-            if (img.src !== fallbackSrc) {
-                img.src = fallbackSrc;
-                return;
-            }
-        }
         img.style.display = 'none';
         const emoji = document.createElement('span');
         emoji.textContent = '🍽️';
@@ -823,6 +783,45 @@ function setupModal() {
         }
     });
 
+}
+
+function setupClearAllButton() {
+    const clearAllButton = document.getElementById('clearAllButton');
+    if (!clearAllButton) return;
+    
+    clearAllButton.addEventListener('click', () => {
+        // すべてのカテゴリーの選択をクリア
+        Object.keys(selectedDishes).forEach(category => {
+            selectedDishes[category] = [];
+            
+            // 対応するカテゴリー行のすべてのボタンの選択を解除
+            const categoryRow = document.querySelector(`.category-row[data-category="${category}"]`);
+            if (categoryRow) {
+                const dishesRow = categoryRow.querySelector('.dishes-row');
+                if (dishesRow) {
+                    dishesRow.querySelectorAll('.dish-button.selected').forEach(btn => {
+                        btn.classList.remove('selected');
+                        const indicator = btn.querySelector('.selected-indicator');
+                        if (indicator) {
+                            indicator.style.display = 'none';
+                        }
+                    });
+                }
+                
+                // カテゴリーのクリアボタンの選択状態も解除
+                const clearButton = categoryRow.querySelector('.clear-button');
+                if (clearButton) {
+                    clearButton.classList.remove('selected');
+                }
+            }
+        });
+        
+        // ローカルストレージに保存
+        saveToLocalStorage();
+        
+        // 栄養情報を更新
+        updateNutrition();
+    });
 }
 
 function addNewDish() {
@@ -1205,10 +1204,6 @@ function updateCategoryFlow() {
                 placeholderImg.alt = '未選択';
                 placeholderImg.className = 'category-flow-placeholder-image';
                 
-                // 遅延読み込みとデコード最適化
-                placeholderImg.loading = 'lazy';
-                placeholderImg.decoding = 'async';
-                
                 // 画像の読み込みを確実にする
                 placeholderImg.onload = function() {
                     this.style.display = 'block';
@@ -1330,11 +1325,6 @@ function updateCategoryFlow() {
                     imgWrapper.setAttribute('data-category', category);
                     
                     const img = document.createElement('img');
-                    
-                    // 遅延読み込みとデコード最適化
-                    img.loading = 'lazy';
-                    img.decoding = 'async';
-                    
                     if (dishData.image && dishData.image.startsWith('data:image')) {
                         img.src = dishData.image;
                     } else if (dishData.image) {
@@ -1389,10 +1379,6 @@ function updateCategoryFlow() {
             placeholderImg.alt = '未選択';
             placeholderImg.className = 'category-flow-placeholder-image';
             
-            // 遅延読み込みとデコード最適化
-            placeholderImg.loading = 'lazy';
-            placeholderImg.decoding = 'async';
-            
             // 画像の読み込みを確実にする
             placeholderImg.onload = function() {
                 this.style.display = 'block';
@@ -1442,10 +1428,6 @@ function updateSelectedDishesImages() {
         
         const img = document.createElement('img');
         img.className = 'selected-dish-image';
-        
-        // 遅延読み込みとデコード最適化
-        img.loading = 'lazy';
-        img.decoding = 'async';
         
         if (dish.image && dish.image.startsWith('data:image')) {
             img.src = dish.image;
@@ -1554,10 +1536,6 @@ function updateSelectedDishesList() {
         
         const img = document.createElement('img');
         img.className = 'selected-dish-item-image';
-        
-        // 遅延読み込みとデコード最適化
-        img.loading = 'lazy';
-        img.decoding = 'async';
         
         if (dish.image && dish.image.startsWith('data:image')) {
             img.src = dish.image;
@@ -2051,10 +2029,6 @@ function setupFixedPfcBarVisibility() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Page load started');
     
-    // WebPサポートをチェック
-    supportsWebP = checkWebPSupport();
-    console.log('WebP support:', supportsWebP);
-    
     // ハンバーガーメニューの設定
     setupHamburgerMenu();
     
@@ -2077,21 +2051,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 固定PFCバランスの表示制御を設定
     setupFixedPfcBarVisibility();
     
-    // 重要な画像をプリロード（プレースホルダーと最初のカテゴリーの画像）
+    // プレースホルダー画像をプリロード
     const preloadImage = new Image();
     preloadImage.src = 'images/unselected-dish.webp';
-    
-    // 最初のカテゴリーの画像を先行読み込み
-    const firstCategoryDishes = nutritionData.filter(item => 
-        item.category === categoryOrder[0] || item.category === categoryOrder[1]
-    ).slice(0, 4); // 最初の4枚だけ
-    
-    firstCategoryDishes.forEach(dish => {
-        const preloadImg = new Image();
-        if (dish.image && !dish.image.startsWith('data:image')) {
-            preloadImg.src = dish.image;
-        }
-    });
     
     // フロー図を初期化（nutritionDataが読み込まれた後）
     // 画像のプリロードを待ってから初期化

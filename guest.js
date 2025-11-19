@@ -337,6 +337,7 @@ function init() {
     
     setupModal();
     initCategoryNavigation();
+    setupClearAllButton();
     
     // フロー図を初期化
     updateCategoryFlow();
@@ -782,6 +783,45 @@ function setupModal() {
         }
     });
 
+}
+
+function setupClearAllButton() {
+    const clearAllButton = document.getElementById('clearAllButton');
+    if (!clearAllButton) return;
+    
+    clearAllButton.addEventListener('click', () => {
+        // すべてのカテゴリーの選択をクリア
+        Object.keys(selectedDishes).forEach(category => {
+            selectedDishes[category] = [];
+            
+            // 対応するカテゴリー行のすべてのボタンの選択を解除
+            const categoryRow = document.querySelector(`.category-row[data-category="${category}"]`);
+            if (categoryRow) {
+                const dishesRow = categoryRow.querySelector('.dishes-row');
+                if (dishesRow) {
+                    dishesRow.querySelectorAll('.dish-button.selected').forEach(btn => {
+                        btn.classList.remove('selected');
+                        const indicator = btn.querySelector('.selected-indicator');
+                        if (indicator) {
+                            indicator.style.display = 'none';
+                        }
+                    });
+                }
+                
+                // カテゴリーのクリアボタンの選択状態も解除
+                const clearButton = categoryRow.querySelector('.clear-button');
+                if (clearButton) {
+                    clearButton.classList.remove('selected');
+                }
+            }
+        });
+        
+        // ローカルストレージに保存
+        saveToLocalStorage();
+        
+        // 栄養情報を更新
+        updateNutrition();
+    });
 }
 
 function addNewDish() {
