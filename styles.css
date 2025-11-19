@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+html {
+    background-color: #f5f5f5;
+}
+
 :root {
     --primary-green: #54af46;
     --dark-green: #54af46;
@@ -29,6 +33,9 @@ body {
     color: var(--text-dark);
     overflow-x: hidden;
     position: relative;
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: #f5f5f5;
 }
 
 /* ハンバーガーメニューボタン */
@@ -88,8 +95,10 @@ body {
 .menu-overlay {
     position: fixed;
     top: 0;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
+    max-width: 480px;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     z-index: 999;
@@ -198,6 +207,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
 }
 
 /* ヘッダー */
@@ -1309,19 +1319,20 @@ body {
 .fixed-pfc-bar {
     position: fixed;
     bottom: 0;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 480px;
+    width: 100%;
     z-index: 98;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.15);
     padding: 12px 16px;
-    transition: transform 0.3s ease;
-    transform: translateY(0);
+    transition: all 0.3s ease;
     border-top: 3px solid var(--primary-green);
 }
 
 .fixed-pfc-bar.hidden {
-    transform: translateY(100%);
+    transform: translateX(-50%) translateY(100%);
 }
 
 .fixed-pfc-content {
@@ -1394,7 +1405,7 @@ body {
 
 /* 2つ目以降の画像を縦に重ねて表示 */
 .category-flow-image-wrapper:not(:first-child) {
-    margin-top: -40px;
+    margin-top: -25px;
     z-index: 2;
 }
 
@@ -1736,12 +1747,13 @@ body {
     padding: 24px;
     border-radius: 20px 20px 0 0;
     width: 100%;
+    max-width: 480px;
     max-height: 90vh;
     overflow-y: auto;
     position: absolute;
     bottom: 0;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .modal-header {
