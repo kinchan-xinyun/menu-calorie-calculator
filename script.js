@@ -1148,10 +1148,11 @@ function updateNutrition() {
             );
             
             if (data) {
-                totalProtein += data.protein;
-                totalFat += data.fat;
-                totalCarbs += data.carbs;
-                totalCalories += data.calories;
+                // 値が有効な数値かチェックし、そうでない場合は0として扱う
+                totalProtein += (isNaN(data.protein) || data.protein === undefined || data.protein === null) ? 0 : parseFloat(data.protein);
+                totalFat += (isNaN(data.fat) || data.fat === undefined || data.fat === null) ? 0 : parseFloat(data.fat);
+                totalCarbs += (isNaN(data.carbs) || data.carbs === undefined || data.carbs === null) ? 0 : parseFloat(data.carbs);
+                totalCalories += (isNaN(data.calories) || data.calories === undefined || data.calories === null) ? 0 : parseFloat(data.calories);
             }
         });
     });
@@ -1597,19 +1598,30 @@ function updateSelectedDishesList() {
 }
 
 function updateNutritionDisplay(protein, fat, carbs, calories) {
-    document.getElementById('total-calories').textContent = calories.toFixed(1);
-    document.getElementById('total-protein').textContent = protein.toFixed(2);
-    document.getElementById('total-fat').textContent = fat.toFixed(2);
-    document.getElementById('total-carbs').textContent = carbs.toFixed(2);
+    // NaNを0に変換
+    const safeCalories = isNaN(calories) ? 0 : calories;
+    const safeProtein = isNaN(protein) ? 0 : protein;
+    const safeFat = isNaN(fat) ? 0 : fat;
+    const safeCarbs = isNaN(carbs) ? 0 : carbs;
+    
+    document.getElementById('total-calories').textContent = safeCalories.toFixed(1);
+    document.getElementById('total-protein').textContent = safeProtein.toFixed(2);
+    document.getElementById('total-fat').textContent = safeFat.toFixed(2);
+    document.getElementById('total-carbs').textContent = safeCarbs.toFixed(2);
     
     // 固定表示のPFCと総カロリーを更新
-    updateFixedCalories(protein, fat, carbs, calories);
+    updateFixedCalories(safeProtein, safeFat, safeCarbs, safeCalories);
 }
 
 function updatePFCChart(protein, fat, carbs) {
-    const proteinKcal = protein * 4;
-    const fatKcal = fat * 9;
-    const carbsKcal = carbs * 4;
+    // NaNを0に変換
+    const safeProtein = isNaN(protein) ? 0 : protein;
+    const safeFat = isNaN(fat) ? 0 : fat;
+    const safeCarbs = isNaN(carbs) ? 0 : carbs;
+    
+    const proteinKcal = safeProtein * 4;
+    const fatKcal = safeFat * 9;
+    const carbsKcal = safeCarbs * 4;
     const totalPfcKcal = proteinKcal + fatKcal + carbsKcal;
     
     let proteinPercent = 0;
@@ -1656,13 +1668,19 @@ function updateFixedCalories(protein, fat, carbs, calories) {
     
     if (!fixedCaloriesValue || !fixedProteinValue || !fixedFatValue || !fixedCarbsValue) return;
     
+    // NaNを0に変換（念のため）
+    const safeProtein = isNaN(protein) ? 0 : protein;
+    const safeFat = isNaN(fat) ? 0 : fat;
+    const safeCarbs = isNaN(carbs) ? 0 : carbs;
+    const safeCalories = isNaN(calories) ? 0 : calories;
+    
     // PFCの値を更新
-    fixedProteinValue.textContent = protein.toFixed(2);
-    fixedFatValue.textContent = fat.toFixed(2);
-    fixedCarbsValue.textContent = carbs.toFixed(2);
+    fixedProteinValue.textContent = safeProtein.toFixed(2);
+    fixedFatValue.textContent = safeFat.toFixed(2);
+    fixedCarbsValue.textContent = safeCarbs.toFixed(2);
     
     // 総カロリーを更新
-    fixedCaloriesValue.textContent = calories.toFixed(1);
+    fixedCaloriesValue.textContent = safeCalories.toFixed(1);
 }
 
 function updatePfcLabel(elementId, percent) {
