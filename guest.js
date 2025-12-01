@@ -325,17 +325,14 @@ function init() {
         // categoryRow.appendChild(addButton);
         container.appendChild(categoryRow);
         
-        // 無限ループとインジケーターを設定（categoryRowに追加された後）
-        // 注意: setupDishIndicatorはsetupInfiniteScrollの前に呼ぶ（複製が追加される前）
+        // インジケーターのみ有効化（無限ループと拡大機能は無効）
         if (dishButtons.length > 0) {
             setupDishIndicator(dishesRow, dishButtons, category);
         }
-        if (dishButtons.length > 1) {
-            setupInfiniteScroll(dishesRow, dishButtons, category);
-        }
-        
-        // 中央に来たdishを大きく表示する機能
-        setupDishCenterObserver(dishesRow);
+        // if (dishButtons.length > 1) {
+        //     setupInfiniteScroll(dishesRow, dishButtons, category);
+        // }
+        // setupDishCenterObserver(dishesRow);
         
         // カテゴリ間に矢印を追加（最後のカテゴリ以外）
         if (index < orderedCategories.length - 1) {
