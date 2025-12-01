@@ -608,11 +608,11 @@ body {
     padding: 16px 0 20px 0;
     text-align: left;
     position: relative;
-    padding-bottom: 40px;
+    padding-bottom: 60px;
 }
 
 .category-label.has-note {
-    padding-bottom: 30px;
+    padding-bottom: 60px;
 }
 
 .category-label-en {
@@ -643,17 +643,60 @@ body {
     overflow-wrap: normal;
 }
 
+.category-selection-guide {
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--primary-green);
+    text-align: center;
+    margin-top: 8px;
+    position: absolute;
+    top: 95px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 2px solid var(--primary-green);
+    display: inline-flex;
+    align-items: center;
+}
+
+
+.category-selection-guide {
+    font-size: 13px;
+    top: 92px;
+    padding: 6px 12px;
+    border-radius: 16px;
+}
+
+.category-label.has-note .category-selection-guide {
+    top: 125px;
+}
+
+.category-label-note {
+    font-size: 14px;
+    top: 30px;
+    max-width: 250px;
+}
+
 .category-label-note {
     font-family: "Zen Kaku Gothic New", sans-serif;
     font-size: 14px;
     font-weight: 500;
     color: var(--text-dark);
     text-align: center;
-    margin-top: 40px;
+    margin-top: 8px;
     padding: 4px 8px;
     background: rgba(255, 193, 7, 0.1);
     border-radius: 8px;
     border-left: 3px solid var(--accent-yellow);
+    position: absolute;
+    top: 23px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 300px;
     position: relative;
     z-index: 1;
 }
@@ -1874,12 +1917,29 @@ body {
         top: 60px;
     }
     
+    .category-selection-guide {
+        font-size: 13px;
+        top: 82px;
+        padding: 6px 12px;
+        border-radius: 16px;
+    }
+    
+    .category-label.has-note .category-selection-guide {
+        top: 125px;
+    }
+    
+    .category-label-note {
+        font-size: 14px;
+        top: 30px;
+        max-width: 250px;
+    }
+    
     .category-label {
-        padding-bottom: 35px;
+        padding-bottom: 50px;
     }
     
     .category-label.has-note {
-        padding-bottom: 25px;
+        padding-bottom: 60px;
     }
     
     /* category-flowのサイズ調整（iPhone 12対応） */

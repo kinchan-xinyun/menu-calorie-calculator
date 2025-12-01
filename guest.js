@@ -259,7 +259,14 @@ function init() {
         categoryLabel.appendChild(enLabel);
         categoryLabel.appendChild(jaLabel);
         
-        // ドレッシングカテゴリーに注釈を追加
+        // 選択可能数の案内を作成
+        const selectionGuide = document.createElement('div');
+        selectionGuide.className = 'category-selection-guide';
+        const totalDishes = dishes.length;
+        const selectCount = category === '副菜' ? '2つ' : '1つ';
+        selectionGuide.textContent = `↓ ↓ ${totalDishes}種類の中から${selectCount}をタップ ↓ ↓`;
+        
+        // ドレッシングカテゴリーの場合は注釈を先に追加
         if (category === 'ドレッシング') {
             const note = document.createElement('div');
             note.className = 'category-label-note';
@@ -267,6 +274,9 @@ function init() {
             categoryLabel.appendChild(note);
             categoryLabel.classList.add('has-note');
         }
+        
+        // 選択可能数の案内を追加
+        categoryLabel.appendChild(selectionGuide);
         
         // 「クリア」ボタン
         const clearButton = document.createElement('button');
