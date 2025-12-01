@@ -608,11 +608,11 @@ body {
     padding: 16px 0 20px 0;
     text-align: left;
     position: relative;
-    padding-bottom: 60px;
+    padding-bottom: 70px;
 }
 
 .category-label.has-note {
-    padding-bottom: 60px;
+    padding-bottom: 70px;
 }
 
 .category-label-en {
@@ -650,11 +650,12 @@ body {
     color: var(--primary-green);
     text-align: center;
     margin-top: 8px;
+    margin-bottom: 20px;
     position: absolute;
     top: 95px;
     left: 50%;
     transform: translateX(-50%);
-    white-space: nowrap;;
+    white-space: nowrap;
     padding: 8px 16px;
     border-radius: 20px;
     border: 2px solid var(--primary-green);
@@ -706,10 +707,10 @@ body {
     flex-direction: row;
     gap: 12px;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 40px calc(50% - 60px) 40px calc(50% - 60px);
+    padding: 30px calc(50% - 60px) 50px calc(50% - 60px);
     scroll-padding: 0 calc(50% - 60px);
     scroll-snap-type: x proximity;
 }
@@ -942,7 +943,7 @@ body {
 .dish-button.center-focused {
     transform: scale(1.3);
     z-index: 10;
-    margin: 0;
+    margin: 10px;
 }
 
 .dish-button.selected .pfc-item.protein-item .pfc-icon {
@@ -1935,11 +1936,11 @@ body {
     }
     
     .category-label {
-        padding-bottom: 50px;
+        padding-bottom: 80px;
     }
     
     .category-label.has-note {
-        padding-bottom: 60px;
+        padding-bottom: 80px;
     }
     
     /* category-flowのサイズ調整（iPhone 12対応） */
