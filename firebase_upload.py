@@ -53,7 +53,8 @@ with open(csv_file_path, mode='r', encoding='utf-8') as file:
                 'carbohydrates': float(row['炭水化物']),  # JavaScriptと統一
                 'totalCalories': float(row['総カロリー']),  # JavaScriptと統一
                 'imageUrl': row['画像パス'],  # JavaScriptと統一
-                'status': row['販売状態']
+                'status': row['販売状態'],
+                'displayOrder': int(row['表示順'])
             }
 
             # ドキュメントIDをカテゴリー_料理名で生成（一意性を確保）

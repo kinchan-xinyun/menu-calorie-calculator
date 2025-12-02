@@ -116,6 +116,7 @@ function parseCSV(csvText) {
             const carbs = values[4] ? parseFloat(values[4]) : 0;
             const calories = values[5] ? parseFloat(values[5]) : 0;
             const imagePath = values[6] ? values[6].trim() : '';
+            const displayOrder = values[8] ? parseInt(values[8]) : 999;
             
             nutritionData.push({
                 category: values[0].trim(),
@@ -124,7 +125,8 @@ function parseCSV(csvText) {
                 fat: fat,
                 carbs: carbs,
                 calories: calories,
-                image: imagePath
+                image: imagePath,
+                displayOrder: displayOrder
             });
         }
     }
@@ -152,7 +154,8 @@ async function loadFromFirestore() {
                     carbs: data.carbohydrates || data.carbs,  // Firestoreのフィールド名に対応
                     calories: data.totalCalories || data.calories,  // Firestoreのフィールド名に対応
                     image: data.imageUrl || data.image || '',  // Firestoreのフィールド名に対応
-                    status: data.status || '販売中'
+                    status: data.status || '販売中',
+                    displayOrder: data.displayOrder || 999
                 });
                 
                 // 販売中止の料理を記録
@@ -224,7 +227,9 @@ function init() {
     });
     
     orderedCategories.forEach((category, index) => {
-        const dishes = nutritionData.filter(item => item.category === category);
+        const dishes = nutritionData
+            .filter(item => item.category === category)
+            .sort((a, b) => (a.displayOrder || 999) - (b.displayOrder || 999));
         
         if (dishes.length === 0) return;
         
@@ -1090,7 +1095,8 @@ function loadFromLocalStorage() {
                                 fat: dish.fat,
                                 carbs: dish.carbs,
                                 calories: dish.calories,
-                                image: dish.image
+                                image: dish.image,
+                                displayOrder: dish.displayOrder || 999
                             });
                         }
                     });
