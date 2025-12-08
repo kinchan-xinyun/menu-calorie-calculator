@@ -28,7 +28,7 @@ const db = firebase.firestore();
 
 // カテゴリ名のマッピング（日本語 → 英語）
 const categoryNameMap = {
-    '主食': { en: 'RICE/SALAD', ja: '主食' },
+    'ベース': { en: 'BASE', ja: 'ベース' },
     '主菜': { en: 'MAIN', ja: '主菜' },
     '副菜': { en: 'SIDE', ja: '副菜' },
     'ドレッシング': { en: 'DRESSING', ja: 'ドレッシング' },
@@ -45,10 +45,10 @@ const categoryNameMap = {
 };
 
 // カテゴリーの順序（メイン画面とナビゲーションの順序）
-const categoryOrder = ['主食', 'ドレッシング', '副菜', '主菜', 'SOUP', 'DRINK', 'その他'];
+const categoryOrder = ['ベース', 'ドレッシング', '副菜', '主菜', 'SOUP', 'DRINK', 'その他'];
 
 // フロー図の順序（元の順序を維持）
-const categoryFlowOrder = ['主食', '副菜', '主菜', 'SOUP', 'DRINK'];
+const categoryFlowOrder = ['ベース', '副菜', '主菜', 'SOUP', 'DRINK'];
 
 // カテゴリ名を取得（マッピングがない場合は元の名前を使用）
 function getCategoryNames(category) {
@@ -677,8 +677,8 @@ function createDishButton(dish, category, dishesRow) {
         
         const isSelected = button.classList.contains('selected');
         
-        // カテゴリー別の選択制限（主食のみ1つだけ、副菜と主菜は複数選択可能）
-        const isSingleSelectCategory = category === '主食'; // 主食のみ1つだけ
+        // カテゴリー別の選択制限（ベースのみ1つだけ、副菜と主菜は複数選択可能）
+        const isSingleSelectCategory = category === 'ベース'; // ベースのみ1つだけ
         
         if (isSelected) {
             // 選択を解除
@@ -690,7 +690,7 @@ function createDishButton(dish, category, dishesRow) {
             selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
         } else {
             // 選択を追加
-            // 単一選択カテゴリー（主食のみ）の場合、他の選択を解除
+            // 単一選択カテゴリー（ベースのみ）の場合、他の選択を解除
             if (isSingleSelectCategory) {
                 // 同じカテゴリー内の他のボタンの選択を解除
                 const categoryRow = button.closest('.category-row');
@@ -1285,7 +1285,7 @@ function updateCategoryFlow() {
             // categoryFlowOrderに含まれるカテゴリは確実に追加（除外チェックをスキップ）
             orderedCategories.push(orderCategory);
         } else {
-            // マッピングを確認（例：'主食' → 'ごはん'）
+            // マッピングを確認（例：'ベース' → 'ごはん'）
             const categoryNames = getCategoryNames(orderCategory);
             const matchingCategory = existingCategories.find(cat => {
                 // categoryFlowOrderに含まれるカテゴリは除外しない
