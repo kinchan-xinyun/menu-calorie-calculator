@@ -12,15 +12,8 @@ const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
 
-// Firebase Configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyDLT6aZmgZrp7rN3xQV8K0h7V0c9gj1h1M",
-    authDomain: "menu-calorie-calculator-6934f.firebaseapp.com",
-    projectId: "menu-calorie-calculator-6934f",
-    storageBucket: "menu-calorie-calculator-6934f.firebasestorage.app",
-    messagingSenderId: "428776906549",
-    appId: "1:428776906549:web:5a5f0e4c3e8e8e8e8e8e8e"
-};
+// Firebase Configuration は firebase-config.js から読み込まれます
+// firebaseConfig は外部ファイルで定義されています
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);

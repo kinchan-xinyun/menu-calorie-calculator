@@ -1,5 +1,8 @@
 # Service Account
 *-firebase-adminsdk-*.json
 
+# Firebase Config (contains API keys)
+firebase-config.*
+
 IMAGE_OPTIMIZATION_README.md
 optimize_images.py
