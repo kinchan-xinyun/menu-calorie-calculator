@@ -1,7 +1,7 @@
 カテゴリー,料理名,タンパク質,脂質,炭水化物,総カロリー,画像パス,販売状態,表示順
-主食,SALAD PLATE,0.82,0.10,2.66,12.0,images/mix_salad.webp,販売中,1
-主食,RICE PLATE,5.25,0.88,61.25,273.0,images/fifteen_grain_rice.webp,販売中,2
-主食,RICE + SALAD PLATE,3.76,0.61,39.23,175.0,images/half.webp,販売中,3
+主食,サラダ,0.82,0.10,2.66,12.0,images/mix_salad.webp,販売中,1
+主食,ライス,5.25,0.88,61.25,273.0,images/fifteen_grain_rice.webp,販売中,2
+主食,ライスとサラダ,3.76,0.61,39.23,175.0,images/half.webp,販売中,3
 ドレッシング,焙煎胡麻ドレッシング,0.66,0.41,3.85,22.0,images/home_brew_sesame_dressing.webp,販売中,1
 ドレッシング,和風オニオンドレッシング,0.37,0.07,2.88,13.0,images/fragrant_onion_dressing.webp,販売中,2
 ドレッシング,スパイシラチャードレッシング,0.65,0.61,2.79,17.0,images/spicy_lachacha_dressing.webp,販売中,3
