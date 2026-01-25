@@ -52,6 +52,12 @@ with open(csv_file_path, mode='r', encoding='utf-8') as file:
                 'fat': float(row['脂質']),
                 'carbohydrates': float(row['炭水化物']),  # JavaScriptと統一
                 'totalCalories': float(row['総カロリー']),  # JavaScriptと統一
+                # 大盛りの栄養情報（増加分）
+                'largeProtein': float(row['大盛りタンパク質']),
+                'largeFat': float(row['大盛り脂質']),
+                'largeCarbohydrates': float(row['大盛り炭水化物']),
+                'largeTotalCalories': float(row['大盛り総カロリー']),
+                'largeGrams': row['大盛りグラム数'],
                 'imageUrl': row['画像パス'],  # JavaScriptと統一
                 'status': row['販売状態'],
                 'displayOrder': int(row['表示順'])

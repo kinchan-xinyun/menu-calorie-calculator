@@ -1035,6 +1035,50 @@ body {
     color: var(--text-dark);
 }
 
+/* 大盛りチェックボックス */
+.large-portion-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    width: 95%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.large-portion-container:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.large-portion-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-green);
+    flex-shrink: 0;
+}
+
+.large-portion-container label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+    cursor: pointer;
+    user-select: none;
+    margin: 0;
+}
+
+.dish-button.selected .large-portion-container {
+    background: rgba(250, 238, 184, 0.8);
+    border-color: rgba(195, 185, 144, 0.3);
+}
+
 /* 販売中止スタイル */
 .dish-button.discontinued {
     opacity: 0.5;
