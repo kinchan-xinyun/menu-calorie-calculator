@@ -679,48 +679,26 @@ function createDishButton(dish, category, dishesRow) {
     // ベースカテゴリーの場合、大盛りチェックボックスを追加（独立したコンテナとして）
     let largePortionCheckbox = null;
     if (category === 'ベース') {
-        // ライス＋サラダの場合は2つのチェックボックスを表示
+        // ライス＋サラダの場合もライスの大盛りチェックボックスのみ表示
         if (dish.dish === 'ライスとサラダ') {
             // ライス用チェックボックス
             const riceCheckboxContainer = document.createElement('div');
             riceCheckboxContainer.className = 'large-portion-container';
             
-            const riceCheckbox = document.createElement('input');
-            riceCheckbox.type = 'checkbox';
-            riceCheckbox.className = 'large-portion-checkbox';
-            riceCheckbox.id = `large-portion-rice-${dish.dish.replace(/\s+/g, '-')}`;
-            riceCheckbox.checked = largePortionDishes[dish.dish + '_rice'] || false;
-            riceCheckbox.setAttribute('data-portion-type', 'rice');
+            largePortionCheckbox = document.createElement('input');
+            largePortionCheckbox.type = 'checkbox';
+            largePortionCheckbox.className = 'large-portion-checkbox';
+            largePortionCheckbox.id = `large-portion-rice-${dish.dish.replace(/\s+/g, '-')}`;
+            largePortionCheckbox.checked = largePortionDishes[dish.dish + '_rice'] || false;
+            largePortionCheckbox.setAttribute('data-portion-type', 'rice');
             
             const riceLabel = document.createElement('label');
-            riceLabel.htmlFor = riceCheckbox.id;
+            riceLabel.htmlFor = largePortionCheckbox.id;
             riceLabel.textContent = 'ライス大盛り +100g';
             
-            riceCheckboxContainer.appendChild(riceCheckbox);
+            riceCheckboxContainer.appendChild(largePortionCheckbox);
             riceCheckboxContainer.appendChild(riceLabel);
             button.appendChild(riceCheckboxContainer);
-            
-            // サラダ用チェックボックス
-            const saladCheckboxContainer = document.createElement('div');
-            saladCheckboxContainer.className = 'large-portion-container';
-            
-            const saladCheckbox = document.createElement('input');
-            saladCheckbox.type = 'checkbox';
-            saladCheckbox.className = 'large-portion-checkbox';
-            saladCheckbox.id = `large-portion-salad-${dish.dish.replace(/\s+/g, '-')}`;
-            saladCheckbox.checked = largePortionDishes[dish.dish + '_salad'] || false;
-            saladCheckbox.setAttribute('data-portion-type', 'salad');
-            
-            const saladLabel = document.createElement('label');
-            saladLabel.htmlFor = saladCheckbox.id;
-            saladLabel.textContent = 'サラダ大盛り +40g';
-            
-            saladCheckboxContainer.appendChild(saladCheckbox);
-            saladCheckboxContainer.appendChild(saladLabel);
-            button.appendChild(saladCheckboxContainer);
-            
-            // 両方のチェックボックスを管理（後でイベントリスナーで使用）
-            largePortionCheckbox = { rice: riceCheckbox, salad: saladCheckbox };
         } else {
             // ライスまたはサラダの場合は1つのチェックボックスのみ
             const checkboxContainer = document.createElement('div');
@@ -799,21 +777,21 @@ function createDishButton(dish, category, dishesRow) {
     
     // ベースカテゴリーのチェックボックスのイベントリスナー
     if (largePortionCheckbox) {
-        // ライス＋サラダの場合（2つのチェックボックス）
-        if (dish.dish === 'ライスとサラダ' && largePortionCheckbox.rice && largePortionCheckbox.salad) {
-            // ライス用とサラダ用の個別データを取得（CSVから読み込む必要がある）
+        // ライス＋サラダの場合（ライスの大盛りのみ）
+        if (dish.dish === 'ライスとサラダ') {
+            // ライスデータを取得
             const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
-            const saladData = nutritionData.find(d => d.dish === 'サラダ' && d.category === 'ベース');
             
-            const updateComboNutrition = () => {
-                const riceChecked = largePortionCheckbox.rice.checked;
-                const saladChecked = largePortionCheckbox.salad.checked;
+            largePortionCheckbox.addEventListener('change', (e) => {
+                e.stopPropagation();
                 
-                // 栄養情報を計算
-                let totalProtein = (saladData?.protein || 0) + (riceData?.protein || 0);
-                let totalFat = (saladData?.fat || 0) + (riceData?.fat || 0);
-                let totalCarbs = (saladData?.carbs || 0) + (riceData?.carbs || 0);
-                let totalCalories = (saladData?.calories || 0) + (riceData?.calories || 0);
+                const riceChecked = largePortionCheckbox.checked;
+                
+                // 栄養情報を計算（ライスのみ大盛り可能）
+                let totalCalories = dish.calories || 0;
+                let totalProtein = dish.protein || 0;
+                let totalFat = dish.fat || 0;
+                let totalCarbs = dish.carbs || 0;
                 
                 if (riceChecked && riceData) {
                     // ライスを大盛りに変更（増加分を追加）
@@ -821,14 +799,6 @@ function createDishButton(dish, category, dishesRow) {
                     totalFat += (riceData.largeFat || 0);
                     totalCarbs += (riceData.largeCarbs || 0);
                     totalCalories += (riceData.largeCalories || 0);
-                }
-                
-                if (saladChecked && saladData) {
-                    // サラダを大盛りに変更（増加分を追加）
-                    totalProtein += (saladData.largeProtein || 0);
-                    totalFat += (saladData.largeFat || 0);
-                    totalCarbs += (saladData.largeCarbs || 0);
-                    totalCalories += (saladData.largeCalories || 0);
                 }
                 
                 // 表示を更新
@@ -839,41 +809,27 @@ function createDishButton(dish, category, dishesRow) {
                 
                 // 状態を保存
                 largePortionDishes[dish.dish + '_rice'] = riceChecked;
-                largePortionDishes[dish.dish + '_salad'] = saladChecked;
-            };
-            
-            // ライスチェックボックスのイベントリスナー
-            largePortionCheckbox.rice.addEventListener('change', (e) => {
-                e.stopPropagation();
-                updateComboNutrition();
+                
                 if (button.classList.contains('selected')) {
                     updateNutrition();
                 }
                 saveToLocalStorage();
             });
             
-            // サラダチェックボックスのイベントリスナー
-            largePortionCheckbox.salad.addEventListener('change', (e) => {
-                e.stopPropagation();
-                updateComboNutrition();
-                if (button.classList.contains('selected')) {
-                    updateNutrition();
-                }
-                saveToLocalStorage();
-            });
-            
-            // 両方のチェックボックスのラベルとコンテナのクリックイベント
-            button.querySelectorAll('.large-portion-container').forEach(container => {
-                container.addEventListener('click', (e) => {
+            // チェックボックスのラベルとコンテナのクリックイベント
+            const checkboxLabel = button.querySelector('label[for="' + largePortionCheckbox.id + '"]');
+            if (checkboxLabel) {
+                checkboxLabel.addEventListener('click', (e) => {
                     e.stopPropagation();
                 });
-                const label = container.querySelector('label');
-                if (label) {
-                    label.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                    });
-                }
-            });
+            }
+            
+            const checkboxContainer = button.querySelector('.large-portion-container');
+            if (checkboxContainer) {
+                checkboxContainer.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
         } else {
             // 通常のチェックボックス（ライスまたはサラダ単体）
             largePortionCheckbox.addEventListener('change', (e) => {
@@ -1418,53 +1374,39 @@ function restoreUISelection() {
         allButtons.forEach(button => {
             const dishName = button.getAttribute('data-dish-name');
             
-            // ライス＋サラダの場合は2つのチェックボックスを復元
+            // ライス＋サラダの場合はライスのチェックボックスのみ復元
             if (dishName === 'ライスとサラダ') {
                 const riceCheckbox = button.querySelector('[data-portion-type="rice"]');
-                const saladCheckbox = button.querySelector('[data-portion-type="salad"]');
+                const dish = nutritionData.find(d => d.dish === dishName && d.category === 'ベース');
                 
                 if (riceCheckbox && largePortionDishes[dishName + '_rice']) {
                     riceCheckbox.checked = true;
-                }
-                if (saladCheckbox && largePortionDishes[dishName + '_salad']) {
-                    saladCheckbox.checked = true;
-                }
-                
-                // 栄養情報を更新
-                if ((riceCheckbox?.checked || saladCheckbox?.checked)) {
+                    
+                    // 栄養情報を更新（ライスの大盛りのみ）
                     const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
-                    const saladData = nutritionData.find(d => d.dish === 'サラダ' && d.category === 'ベース');
                     
-                    let totalProtein = (saladData?.protein || 0) + (riceData?.protein || 0);
-                    let totalFat = (saladData?.fat || 0) + (riceData?.fat || 0);
-                    let totalCarbs = (saladData?.carbs || 0) + (riceData?.carbs || 0);
-                    let totalCalories = (saladData?.calories || 0) + (riceData?.calories || 0);
-                    
-                    if (riceCheckbox?.checked && riceData) {
+                    if (dish && riceData) {
+                        let totalProtein = dish.protein || 0;
+                        let totalFat = dish.fat || 0;
+                        let totalCarbs = dish.carbs || 0;
+                        let totalCalories = dish.calories || 0;
+                        
                         // ライスの増加分を追加
                         totalProtein += (riceData.largeProtein || 0);
                         totalFat += (riceData.largeFat || 0);
                         totalCarbs += (riceData.largeCarbs || 0);
                         totalCalories += (riceData.largeCalories || 0);
+                        
+                        const caloriesValue = button.querySelector('.dish-button-calories-value');
+                        const proteinValue = button.querySelector('.protein-item .pfc-value');
+                        const fatValue = button.querySelector('.fat-item .pfc-value');
+                        const carbsValue = button.querySelector('.carbs-item .pfc-value');
+                        
+                        if (caloriesValue) caloriesValue.textContent = totalCalories.toFixed(1);
+                        if (proteinValue) proteinValue.textContent = totalProtein.toFixed(2);
+                        if (fatValue) fatValue.textContent = totalFat.toFixed(2);
+                        if (carbsValue) carbsValue.textContent = totalCarbs.toFixed(2);
                     }
-                    
-                    if (saladCheckbox?.checked && saladData) {
-                        // サラダの増加分を追加
-                        totalProtein += (saladData.largeProtein || 0);
-                        totalFat += (saladData.largeFat || 0);
-                        totalCarbs += (saladData.largeCarbs || 0);
-                        totalCalories += (saladData.largeCalories || 0);
-                    }
-                    
-                    const caloriesValue = button.querySelector('.dish-button-calories-value');
-                    const proteinValue = button.querySelector('.protein-item .pfc-value');
-                    const fatValue = button.querySelector('.fat-item .pfc-value');
-                    const carbsValue = button.querySelector('.carbs-item .pfc-value');
-                    
-                    if (caloriesValue) caloriesValue.textContent = totalCalories.toFixed(1);
-                    if (proteinValue) proteinValue.textContent = totalProtein.toFixed(2);
-                    if (fatValue) fatValue.textContent = totalFat.toFixed(2);
-                    if (carbsValue) carbsValue.textContent = totalCarbs.toFixed(2);
                 }
             } else {
                 // 通常のチェックボックス
@@ -1512,16 +1454,15 @@ function updateNutrition() {
             if (data) {
                 let protein, fat, carbs, calories;
                 
-                // ライス＋サラダの場合は特別な処理
+                // ライス＋サラダの場合は特別な処理（ライスのみ大盛り可能）
                 if (category === 'ベース' && dishName === 'ライスとサラダ') {
                     const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
-                    const saladData = nutritionData.find(d => d.dish === 'サラダ' && d.category === 'ベース');
                     
-                    // 基本の値（サラダ＋ライス）
-                    protein = (saladData?.protein || 0) + (riceData?.protein || 0);
-                    fat = (saladData?.fat || 0) + (riceData?.fat || 0);
-                    carbs = (saladData?.carbs || 0) + (riceData?.carbs || 0);
-                    calories = (saladData?.calories || 0) + (riceData?.calories || 0);
+                    // 基本の値（ライス＋サラダの通常サイズ）
+                    protein = data.protein || 0;
+                    fat = data.fat || 0;
+                    carbs = data.carbs || 0;
+                    calories = data.calories || 0;
                     
                     // ライスが大盛りの場合（増加分を追加）
                     if (largePortionDishes[dishName + '_rice'] && riceData) {
@@ -1529,14 +1470,6 @@ function updateNutrition() {
                         fat += (riceData.largeFat || 0);
                         carbs += (riceData.largeCarbs || 0);
                         calories += (riceData.largeCalories || 0);
-                    }
-                    
-                    // サラダが大盛りの場合（増加分を追加）
-                    if (largePortionDishes[dishName + '_salad'] && saladData) {
-                        protein += (saladData.largeProtein || 0);
-                        fat += (saladData.largeFat || 0);
-                        carbs += (saladData.largeCarbs || 0);
-                        calories += (saladData.largeCalories || 0);
                     }
                 } else if (category === 'ベース' && largePortionDishes[dishName]) {
                     // 通常の大盛り処理（ライスまたはサラダ単体）= 通常値 + 増加分

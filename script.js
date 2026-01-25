@@ -4,6 +4,7 @@ let selectedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 let currentCategory = null;
 let customDishes = {};
 let discontinuedDishes = {}; // { category: ['dish1', 'dish2', ...] }
+let largePortionDishes = {}; // { dishName: true/false } 各料理の大盛り状態
 
 // LocalStorage キー
 const STORAGE_KEY_CUSTOM = 'customDishes';
@@ -11,6 +12,7 @@ const STORAGE_KEY_SELECTED = 'selectedDishes';
 const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
+const STORAGE_KEY_LARGE_PORTION = 'largePortionDishes';
 
 // Firebase Configuration は firebase-config.js から読み込まれます
 // firebaseConfig は外部ファイルで定義されています
@@ -97,6 +99,17 @@ async function loadCSV() {
 function parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
     
+    // カテゴリー名の変換マッピング
+    const categoryMapping = {
+        '主食': 'ベース',
+        'ごはん': 'ベース',
+        'サラダ': '副菜',
+        'メイン': '主菜',
+        'サイド': '副菜',
+        'デザート': 'その他',
+        '飲み物': 'DRINK'
+    };
+    
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
@@ -104,20 +117,42 @@ function parseCSV(csvText) {
         const values = parseCSVLine(line);
         
         if (values.length >= 5) {
+            // 通常サイズの栄養情報
             const protein = values[2] ? parseFloat(values[2]) : 0;
             const fat = values[3] ? parseFloat(values[3]) : 0;
             const carbs = values[4] ? parseFloat(values[4]) : 0;
             const calories = values[5] ? parseFloat(values[5]) : 0;
-            const imagePath = values[6] ? values[6].trim() : '';
-            const displayOrder = values[8] ? parseInt(values[8]) : 999;
+            
+            // 大盛りの栄養情報（増加分）
+            const largeProtein = values[6] ? parseFloat(values[6]) : 0;
+            const largeFat = values[7] ? parseFloat(values[7]) : 0;
+            const largeCarbs = values[8] ? parseFloat(values[8]) : 0;
+            const largeCalories = values[9] ? parseFloat(values[9]) : 0;
+            
+            // 大盛りグラム数（表示用）
+            const largeGrams = values[10] ? values[10].trim() : '';
+            
+            const imagePath = values[11] ? values[11].trim() : '';
+            const displayOrder = values[13] ? parseInt(values[13]) : 999;
+            
+            // カテゴリー名を変換（マッピングがある場合）
+            let category = values[0].trim();
+            if (categoryMapping[category]) {
+                category = categoryMapping[category];
+            }
             
             nutritionData.push({
-                category: values[0].trim(),
+                category: category,
                 dish: values[1].trim(),
                 protein: protein,
                 fat: fat,
                 carbs: carbs,
                 calories: calories,
+                largeProtein: largeProtein,
+                largeFat: largeFat,
+                largeCarbs: largeCarbs,
+                largeCalories: largeCalories,
+                largeGrams: largeGrams,
                 image: imagePath,
                 displayOrder: displayOrder
             });
@@ -138,14 +173,37 @@ async function loadFromFirestore() {
             
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                const protein = data.protein || 0;
+                const fat = data.fat || 0;
+                const carbs = data.carbohydrates || data.carbs || 0;
+                const calories = data.totalCalories || data.calories || 0;
+                
+                const dishName = data.dishName || data.dish;
+                
+                // グラム数情報のデフォルト値を設定
+                let largeGrams = data.largeGrams || '';
+                if (!largeGrams) {
+                    if (dishName === 'ライス') {
+                        largeGrams = '+100g';
+                    } else if (dishName === 'サラダ') {
+                        largeGrams = '+40g';
+                    }
+                }
+                
                 nutritionData.push({
                     id: doc.id,
                     category: data.category,
-                    dish: data.dishName || data.dish,  // Firestoreのフィールド名に対応
-                    protein: data.protein,
-                    fat: data.fat,
-                    carbs: data.carbohydrates || data.carbs,  // Firestoreのフィールド名に対応
-                    calories: data.totalCalories || data.calories,  // Firestoreのフィールド名に対応
+                    dish: dishName,  // Firestoreのフィールド名に対応
+                    protein: protein,
+                    fat: fat,
+                    carbs: carbs,
+                    calories: calories,
+                    // 大盛りの栄養情報（増加分、Firestoreに保存されている場合は使用、なければ0）
+                    largeProtein: data.largeProtein || 0,
+                    largeFat: data.largeFat || 0,
+                    largeCarbs: data.largeCarbohydrates || data.largeCarbs || 0,
+                    largeCalories: data.largeTotalCalories || data.largeCalories || 0,
+                    largeGrams: largeGrams,
                     image: data.imageUrl || data.image || '',  // Firestoreのフィールド名に対応
                     status: data.status || '販売中',
                     displayOrder: data.displayOrder || 999
@@ -320,17 +378,17 @@ function init() {
         categoryRow.appendChild(categoryLabel);
         categoryRow.appendChild(dishesRow);
         categoryRow.appendChild(clearButton);
-        categoryRow.appendChild(addButton);
+        // categoryRow.appendChild(addButton);
         container.appendChild(categoryRow);
         
         // インジケーターのみ有効化（無限ループと拡大機能は無効）
         if (dishButtons.length > 0) {
             setupDishIndicator(dishesRow, dishButtons, category);
         }
-        // if (dishButtons.length > 1) {
-        //     setupInfiniteScroll(dishesRow, dishButtons, category);
-        // }
-        // setupDishCenterObserver(dishesRow);
+        if (dishButtons.length > 1) {
+            setupInfiniteScroll(dishesRow, dishButtons, category);
+        }
+        setupDishCenterObserver(dishesRow);
         
         // カテゴリ間に矢印を追加（最後のカテゴリ以外）
         if (index < orderedCategories.length - 1) {
@@ -618,6 +676,62 @@ function createDishButton(dish, category, dishesRow) {
     button.appendChild(img);
     button.appendChild(labelContainer);
     
+    // ベースカテゴリーの場合、大盛りチェックボックスを追加（独立したコンテナとして）
+    let largePortionCheckbox = null;
+    if (category === 'ベース') {
+        // ライス＋サラダの場合もライスの大盛りチェックボックスのみ表示
+        if (dish.dish === 'ライスとサラダ') {
+            // ライス用チェックボックス
+            const riceCheckboxContainer = document.createElement('div');
+            riceCheckboxContainer.className = 'large-portion-container';
+            
+            largePortionCheckbox = document.createElement('input');
+            largePortionCheckbox.type = 'checkbox';
+            largePortionCheckbox.className = 'large-portion-checkbox';
+            largePortionCheckbox.id = `large-portion-rice-${dish.dish.replace(/\s+/g, '-')}`;
+            largePortionCheckbox.checked = largePortionDishes[dish.dish + '_rice'] || false;
+            largePortionCheckbox.setAttribute('data-portion-type', 'rice');
+            
+            const riceLabel = document.createElement('label');
+            riceLabel.htmlFor = largePortionCheckbox.id;
+            riceLabel.textContent = 'ライス大盛り +100g';
+            
+            riceCheckboxContainer.appendChild(largePortionCheckbox);
+            riceCheckboxContainer.appendChild(riceLabel);
+            button.appendChild(riceCheckboxContainer);
+        } else {
+            // ライスまたはサラダの場合は1つのチェックボックスのみ
+            const checkboxContainer = document.createElement('div');
+            checkboxContainer.className = 'large-portion-container';
+            
+            largePortionCheckbox = document.createElement('input');
+            largePortionCheckbox.type = 'checkbox';
+            largePortionCheckbox.className = 'large-portion-checkbox';
+            largePortionCheckbox.id = `large-portion-${dish.dish.replace(/\s+/g, '-')}`;
+            largePortionCheckbox.checked = largePortionDishes[dish.dish] || false;
+            
+            const checkboxLabel = document.createElement('label');
+            checkboxLabel.htmlFor = largePortionCheckbox.id;
+            // 料理名とグラム数情報を表示
+            let gramsText = '';
+            if (dish.largeGrams && dish.largeGrams.trim() !== '') {
+                gramsText = dish.largeGrams;
+            } else {
+                // グラム数情報がない場合、料理名からデフォルト値を設定
+                if (dish.dish === 'ライス') {
+                    gramsText = '+100g';
+                } else if (dish.dish === 'サラダ') {
+                    gramsText = '+40g';
+                }
+            }
+            checkboxLabel.textContent = gramsText ? `${dish.dish}大盛り ${gramsText}` : `${dish.dish}大盛り`;
+            
+            checkboxContainer.appendChild(largePortionCheckbox);
+            checkboxContainer.appendChild(checkboxLabel);
+            button.appendChild(checkboxContainer);
+        }
+    }
+    
     // ボタンアクション用コンテナ
     const actionContainer = document.createElement('div');
     actionContainer.className = 'button-actions';
@@ -659,6 +773,104 @@ function createDishButton(dish, category, dishesRow) {
     // 販売中止時の表示
     if (isDiscontinued) {
         button.classList.add('discontinued');
+    }
+    
+    // ベースカテゴリーのチェックボックスのイベントリスナー
+    if (largePortionCheckbox) {
+        // ライス＋サラダの場合（ライスの大盛りのみ）
+        if (dish.dish === 'ライスとサラダ') {
+            // ライスデータを取得
+            const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
+            
+            largePortionCheckbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                
+                const riceChecked = largePortionCheckbox.checked;
+                
+                // 栄養情報を計算（ライスのみ大盛り可能）
+                let totalCalories = dish.calories || 0;
+                let totalProtein = dish.protein || 0;
+                let totalFat = dish.fat || 0;
+                let totalCarbs = dish.carbs || 0;
+                
+                if (riceChecked && riceData) {
+                    // ライスを大盛りに変更（増加分を追加）
+                    totalProtein += (riceData.largeProtein || 0);
+                    totalFat += (riceData.largeFat || 0);
+                    totalCarbs += (riceData.largeCarbs || 0);
+                    totalCalories += (riceData.largeCalories || 0);
+                }
+                
+                // 表示を更新
+                caloriesValue.textContent = totalCalories.toFixed(1);
+                proteinValue.textContent = totalProtein.toFixed(2);
+                fatValue.textContent = totalFat.toFixed(2);
+                carbsValue.textContent = totalCarbs.toFixed(2);
+                
+                // 状態を保存
+                largePortionDishes[dish.dish + '_rice'] = riceChecked;
+                
+                if (button.classList.contains('selected')) {
+                    updateNutrition();
+                }
+                saveToLocalStorage();
+            });
+            
+            // チェックボックスのラベルとコンテナのクリックイベント
+            const checkboxLabel = button.querySelector('label[for="' + largePortionCheckbox.id + '"]');
+            if (checkboxLabel) {
+                checkboxLabel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+            
+            const checkboxContainer = button.querySelector('.large-portion-container');
+            if (checkboxContainer) {
+                checkboxContainer.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+        } else {
+            // 通常のチェックボックス（ライスまたはサラダ単体）
+            largePortionCheckbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                
+                largePortionDishes[dish.dish] = largePortionCheckbox.checked;
+                
+                if (largePortionCheckbox.checked) {
+                    // 大盛り = 通常値 + 増加分
+                    caloriesValue.textContent = ((dish.calories || 0) + (dish.largeCalories || 0)).toFixed(1);
+                    proteinValue.textContent = ((dish.protein || 0) + (dish.largeProtein || 0)).toFixed(2);
+                    fatValue.textContent = ((dish.fat || 0) + (dish.largeFat || 0)).toFixed(2);
+                    carbsValue.textContent = ((dish.carbs || 0) + (dish.largeCarbs || 0)).toFixed(2);
+                } else {
+                    caloriesValue.textContent = (dish.calories || 0).toFixed(1);
+                    proteinValue.textContent = (dish.protein || 0).toFixed(2);
+                    fatValue.textContent = (dish.fat || 0).toFixed(2);
+                    carbsValue.textContent = (dish.carbs || 0).toFixed(2);
+                }
+                
+                if (button.classList.contains('selected')) {
+                    updateNutrition();
+                }
+                
+                saveToLocalStorage();
+            });
+            
+            const checkboxLabel = button.querySelector('label[for="' + largePortionCheckbox.id + '"]');
+            if (checkboxLabel) {
+                checkboxLabel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+            
+            const checkboxContainer = button.querySelector('.large-portion-container');
+            if (checkboxContainer) {
+                checkboxContainer.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+        }
     }
     
     // 複数選択対応
@@ -886,6 +1098,12 @@ async function saveToFirestore(dish) {
             fat: dish.fat,
             carbohydrates: dish.carbs,  // 内部的には carbs だが、Firestoreには carbohydrates として保存
             totalCalories: dish.calories,  // 内部的には calories だが、Firestoreには totalCalories として保存
+            // 大盛りの栄養情報も保存
+            largeProtein: dish.largeProtein || dish.protein,
+            largeFat: dish.largeFat || dish.fat,
+            largeCarbohydrates: dish.largeCarbs || dish.carbs,
+            largeTotalCalories: dish.largeCalories || dish.calories,
+            largeGrams: dish.largeGrams || '',
             imageUrl: dish.image || '',  // 内部的には image だが、Firestoreには imageUrl として保存
             status: '販売中'
         });
@@ -1024,11 +1242,13 @@ function saveToLocalStorage() {
     localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(customDishes));
     localStorage.setItem(STORAGE_KEY_SELECTED, JSON.stringify(selectedDishes));
     localStorage.setItem(STORAGE_KEY_DISCONTINUED, JSON.stringify(discontinuedDishes));
+    localStorage.setItem(STORAGE_KEY_LARGE_PORTION, JSON.stringify(largePortionDishes));
     
     // SessionStorage バックアップ
     sessionStorage.setItem(BACKUP_KEY, JSON.stringify(customDishes));
     sessionStorage.setItem(STORAGE_KEY_SELECTED + '_backup', JSON.stringify(selectedDishes));
     sessionStorage.setItem(STORAGE_KEY_DISCONTINUED, JSON.stringify(discontinuedDishes));
+    sessionStorage.setItem(STORAGE_KEY_LARGE_PORTION + '_backup', JSON.stringify(largePortionDishes));
     sessionStorage.setItem(BACKUP_TIMESTAMP_KEY, Date.now().toString());
 }
 
@@ -1114,6 +1334,17 @@ function loadFromLocalStorage() {
             console.error('選択状態の読み込みエラー:', e);
         }
     }
+    
+    // 大盛りの状態を復元（料理ごと）
+    const savedLargePortion = localStorage.getItem(STORAGE_KEY_LARGE_PORTION);
+    if (savedLargePortion) {
+        try {
+            largePortionDishes = JSON.parse(savedLargePortion);
+        } catch (e) {
+            console.error('大盛り状態の読み込みエラー:', e);
+            largePortionDishes = {};
+        }
+    }
 }
 
 function restoreUISelection() {
@@ -1135,6 +1366,73 @@ function restoreUISelection() {
             }
         });
     });
+    
+    // ベースカテゴリーのチェックボックスの状態を復元（料理ごと）
+    const baseCategoryRow = document.querySelector('.category-row[data-category="ベース"]');
+    if (baseCategoryRow) {
+        const allButtons = baseCategoryRow.querySelectorAll('.dish-button');
+        allButtons.forEach(button => {
+            const dishName = button.getAttribute('data-dish-name');
+            
+            // ライス＋サラダの場合はライスのチェックボックスのみ復元
+            if (dishName === 'ライスとサラダ') {
+                const riceCheckbox = button.querySelector('[data-portion-type="rice"]');
+                const dish = nutritionData.find(d => d.dish === dishName && d.category === 'ベース');
+                
+                if (riceCheckbox && largePortionDishes[dishName + '_rice']) {
+                    riceCheckbox.checked = true;
+                    
+                    // 栄養情報を更新（ライスの大盛りのみ）
+                    const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
+                    
+                    if (dish && riceData) {
+                        let totalProtein = dish.protein || 0;
+                        let totalFat = dish.fat || 0;
+                        let totalCarbs = dish.carbs || 0;
+                        let totalCalories = dish.calories || 0;
+                        
+                        // ライスの増加分を追加
+                        totalProtein += (riceData.largeProtein || 0);
+                        totalFat += (riceData.largeFat || 0);
+                        totalCarbs += (riceData.largeCarbs || 0);
+                        totalCalories += (riceData.largeCalories || 0);
+                        
+                        const caloriesValue = button.querySelector('.dish-button-calories-value');
+                        const proteinValue = button.querySelector('.protein-item .pfc-value');
+                        const fatValue = button.querySelector('.fat-item .pfc-value');
+                        const carbsValue = button.querySelector('.carbs-item .pfc-value');
+                        
+                        if (caloriesValue) caloriesValue.textContent = totalCalories.toFixed(1);
+                        if (proteinValue) proteinValue.textContent = totalProtein.toFixed(2);
+                        if (fatValue) fatValue.textContent = totalFat.toFixed(2);
+                        if (carbsValue) carbsValue.textContent = totalCarbs.toFixed(2);
+                    }
+                }
+            } else {
+                // 通常のチェックボックス
+                const checkbox = button.querySelector('.large-portion-checkbox');
+                
+                if (checkbox && largePortionDishes[dishName]) {
+                    checkbox.checked = true;
+                    
+                    const dish = nutritionData.find(d => d.dish === dishName && d.category === 'ベース');
+                    
+                    if (dish) {
+                        const caloriesValue = button.querySelector('.dish-button-calories-value');
+                        const proteinValue = button.querySelector('.protein-item .pfc-value');
+                        const fatValue = button.querySelector('.fat-item .pfc-value');
+                        const carbsValue = button.querySelector('.carbs-item .pfc-value');
+                        
+                        // 大盛り = 通常値 + 増加分
+                        if (caloriesValue) caloriesValue.textContent = ((dish.calories || 0) + (dish.largeCalories || 0)).toFixed(1);
+                        if (proteinValue) proteinValue.textContent = ((dish.protein || 0) + (dish.largeProtein || 0)).toFixed(2);
+                        if (fatValue) fatValue.textContent = ((dish.fat || 0) + (dish.largeFat || 0)).toFixed(2);
+                        if (carbsValue) carbsValue.textContent = ((dish.carbs || 0) + (dish.largeCarbs || 0)).toFixed(2);
+                    }
+                }
+            }
+        });
+    }
 }
 
 // ==================== 栄養情報計算 ====================
@@ -1154,11 +1452,44 @@ function updateNutrition() {
             );
             
             if (data) {
+                let protein, fat, carbs, calories;
+                
+                // ライス＋サラダの場合は特別な処理（ライスのみ大盛り可能）
+                if (category === 'ベース' && dishName === 'ライスとサラダ') {
+                    const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
+                    
+                    // 基本の値（ライス＋サラダの通常サイズ）
+                    protein = data.protein || 0;
+                    fat = data.fat || 0;
+                    carbs = data.carbs || 0;
+                    calories = data.calories || 0;
+                    
+                    // ライスが大盛りの場合（増加分を追加）
+                    if (largePortionDishes[dishName + '_rice'] && riceData) {
+                        protein += (riceData.largeProtein || 0);
+                        fat += (riceData.largeFat || 0);
+                        carbs += (riceData.largeCarbs || 0);
+                        calories += (riceData.largeCalories || 0);
+                    }
+                } else if (category === 'ベース' && largePortionDishes[dishName]) {
+                    // 通常の大盛り処理（ライスまたはサラダ単体）= 通常値 + 増加分
+                    protein = (data.protein || 0) + (data.largeProtein || 0);
+                    fat = (data.fat || 0) + (data.largeFat || 0);
+                    carbs = (data.carbs || 0) + (data.largeCarbs || 0);
+                    calories = (data.calories || 0) + (data.largeCalories || 0);
+                } else {
+                    // 通常の値を使用
+                    protein = data.protein || 0;
+                    fat = data.fat || 0;
+                    carbs = data.carbs || 0;
+                    calories = data.calories || 0;
+                }
+                
                 // 値が有効な数値かチェックし、そうでない場合は0として扱う
-                totalProtein += (isNaN(data.protein) || data.protein === undefined || data.protein === null) ? 0 : parseFloat(data.protein);
-                totalFat += (isNaN(data.fat) || data.fat === undefined || data.fat === null) ? 0 : parseFloat(data.fat);
-                totalCarbs += (isNaN(data.carbs) || data.carbs === undefined || data.carbs === null) ? 0 : parseFloat(data.carbs);
-                totalCalories += (isNaN(data.calories) || data.calories === undefined || data.calories === null) ? 0 : parseFloat(data.calories);
+                totalProtein += (isNaN(protein) || protein === undefined || protein === null) ? 0 : parseFloat(protein);
+                totalFat += (isNaN(fat) || fat === undefined || fat === null) ? 0 : parseFloat(fat);
+                totalCarbs += (isNaN(carbs) || carbs === undefined || carbs === null) ? 0 : parseFloat(carbs);
+                totalCalories += (isNaN(calories) || calories === undefined || calories === null) ? 0 : parseFloat(calories);
             }
         });
     });
