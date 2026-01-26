@@ -768,26 +768,23 @@ function createDishButton(dish, category, dishesRow) {
     if (largePortionCheckbox) {
         // ライス＋サラダの場合（ライスの大盛りのみ）
         if (dish.dish === 'ライスとサラダ') {
-            // ライスデータを取得
-            const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
-            
             largePortionCheckbox.addEventListener('change', (e) => {
                 e.stopPropagation();
                 
                 const riceChecked = largePortionCheckbox.checked;
                 
-                // 栄養情報を計算（ライスのみ大盛り可能）
+                // 栄養情報を計算（ライス＋サラダ自体の大盛り数値を使用）
                 let totalCalories = dish.calories || 0;
                 let totalProtein = dish.protein || 0;
                 let totalFat = dish.fat || 0;
                 let totalCarbs = dish.carbs || 0;
                 
-                if (riceChecked && riceData) {
-                    // ライスを大盛りに変更（増加分を追加）
-                    totalProtein += (riceData.largeProtein || 0);
-                    totalFat += (riceData.largeFat || 0);
-                    totalCarbs += (riceData.largeCarbs || 0);
-                    totalCalories += (riceData.largeCalories || 0);
+                if (riceChecked) {
+                    // ライス＋サラダの大盛り増加分を追加
+                    totalProtein += (dish.largeProtein || 0);
+                    totalFat += (dish.largeFat || 0);
+                    totalCarbs += (dish.largeCarbs || 0);
+                    totalCalories += (dish.largeCalories || 0);
                 }
                 
                 // 表示を更新
@@ -1371,20 +1368,18 @@ function restoreUISelection() {
                 if (riceCheckbox && largePortionDishes[dishName + '_rice']) {
                     riceCheckbox.checked = true;
                     
-                    // 栄養情報を更新（ライスの大盛りのみ）
-                    const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
-                    
-                    if (dish && riceData) {
+                    // 栄養情報を更新（ライス＋サラダ自体の大盛り数値を使用）
+                    if (dish) {
                         let totalProtein = dish.protein || 0;
                         let totalFat = dish.fat || 0;
                         let totalCarbs = dish.carbs || 0;
                         let totalCalories = dish.calories || 0;
                         
-                        // ライスの増加分を追加
-                        totalProtein += (riceData.largeProtein || 0);
-                        totalFat += (riceData.largeFat || 0);
-                        totalCarbs += (riceData.largeCarbs || 0);
-                        totalCalories += (riceData.largeCalories || 0);
+                        // ライス＋サラダの大盛り増加分を追加
+                        totalProtein += (dish.largeProtein || 0);
+                        totalFat += (dish.largeFat || 0);
+                        totalCarbs += (dish.largeCarbs || 0);
+                        totalCalories += (dish.largeCalories || 0);
                         
                         const caloriesValue = button.querySelector('.dish-button-calories-value');
                         const proteinValue = button.querySelector('.protein-item .pfc-value');
@@ -1443,22 +1438,20 @@ function updateNutrition() {
             if (data) {
                 let protein, fat, carbs, calories;
                 
-                // ライス＋サラダの場合は特別な処理（ライスのみ大盛り可能）
+                // ライス＋サラダの場合は特別な処理（ライス＋サラダ自体の大盛り数値を使用）
                 if (category === 'ベース' && dishName === 'ライスとサラダ') {
-                    const riceData = nutritionData.find(d => d.dish === 'ライス' && d.category === 'ベース');
-                    
                     // 基本の値（ライス＋サラダの通常サイズ）
                     protein = data.protein || 0;
                     fat = data.fat || 0;
                     carbs = data.carbs || 0;
                     calories = data.calories || 0;
                     
-                    // ライスが大盛りの場合（増加分を追加）
-                    if (largePortionDishes[dishName + '_rice'] && riceData) {
-                        protein += (riceData.largeProtein || 0);
-                        fat += (riceData.largeFat || 0);
-                        carbs += (riceData.largeCarbs || 0);
-                        calories += (riceData.largeCalories || 0);
+                    // ライスが大盛りの場合（ライス＋サラダの大盛り増加分を追加）
+                    if (largePortionDishes[dishName + '_rice']) {
+                        protein += (data.largeProtein || 0);
+                        fat += (data.largeFat || 0);
+                        carbs += (data.largeCarbs || 0);
+                        calories += (data.largeCalories || 0);
                     }
                 } else if (category === 'ベース' && largePortionDishes[dishName]) {
                     // 通常の大盛り処理（ライスまたはサラダ単体）= 通常値 + 増加分
