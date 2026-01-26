@@ -694,7 +694,7 @@ function createDishButton(dish, category, dishesRow) {
             
             const riceLabel = document.createElement('label');
             riceLabel.htmlFor = largePortionCheckbox.id;
-            riceLabel.textContent = 'ライス大盛り +100g';
+            riceLabel.textContent = 'ライス大盛り';
             
             riceCheckboxContainer.appendChild(largePortionCheckbox);
             riceCheckboxContainer.appendChild(riceLabel);
@@ -712,19 +712,8 @@ function createDishButton(dish, category, dishesRow) {
             
             const checkboxLabel = document.createElement('label');
             checkboxLabel.htmlFor = largePortionCheckbox.id;
-            // 料理名とグラム数情報を表示
-            let gramsText = '';
-            if (dish.largeGrams && dish.largeGrams.trim() !== '') {
-                gramsText = dish.largeGrams;
-            } else {
-                // グラム数情報がない場合、料理名からデフォルト値を設定
-                if (dish.dish === 'ライス') {
-                    gramsText = '+100g';
-                } else if (dish.dish === 'サラダ') {
-                    gramsText = '+40g';
-                }
-            }
-            checkboxLabel.textContent = gramsText ? `${dish.dish}大盛り ${gramsText}` : `${dish.dish}大盛り`;
+            // グラム数表示なし、料理名のみ
+            checkboxLabel.textContent = `${dish.dish}大盛り`;
             
             checkboxContainer.appendChild(largePortionCheckbox);
             checkboxContainer.appendChild(checkboxLabel);
