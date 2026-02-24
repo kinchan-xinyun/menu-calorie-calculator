@@ -772,6 +772,62 @@ body {
     touch-action: manipulation;
 }
 
+.quantity-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--primary-green);
+    color: white;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.quantity-controls {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+}
+
+.quantity-btn {
+    background: white;
+    border: 2px solid var(--primary-green);
+    color: var(--primary-green);
+    font-weight: 700;
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+
+.quantity-btn:hover {
+    background: var(--primary-green);
+    color: white;
+}
+
+.quantity-btn:active {
+    transform: scale(0.95);
+}
+
 .dish-button-img {
     width: 110px;
     height: 110px;

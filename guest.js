@@ -1,6 +1,7 @@
 // グローバル変数
 let nutritionData = [];
 let selectedDishes = {}; // { category: ['dish1', 'dish2', ...] }
+let dishQuantities = {}; // { 'category_dishName': quantity } 各料理の数量
 let currentCategory = null;
 let customDishes = {};
 let discontinuedDishes = {}; // { category: ['dish1', 'dish2', ...] }
@@ -9,6 +10,7 @@ let largePortionDishes = {}; // { dishName: true/false } 各料理の大盛り�
 // LocalStorage キー
 const STORAGE_KEY_CUSTOM = 'customDishes';
 const STORAGE_KEY_SELECTED = 'selectedDishes';
+const STORAGE_KEY_QUANTITIES = 'dishQuantities';
 const BACKUP_KEY = 'nutritionBackup';
 const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
@@ -347,6 +349,23 @@ function init() {
             selectedDishes[category] = [];
             dishesRow.querySelectorAll('.dish-button').forEach(btn => {
                 btn.classList.remove('selected');
+                
+                // 数量バッジとコントロールボタンを非表示
+                const quantityBadge = btn.querySelector('.quantity-badge');
+                const quantityControls = btn.querySelector('.quantity-controls');
+                if (quantityBadge) {
+                    quantityBadge.style.display = 'none';
+                }
+                if (quantityControls) {
+                    quantityControls.style.display = 'none';
+                }
+                
+                // 該当カテゴリーの数量データをクリア
+                const dishName = btn.getAttribute('data-dish-name');
+                if (dishName) {
+                    const quantityKey = `${category}_${dishName}`;
+                    delete dishQuantities[quantityKey];
+                }
             });
             clearButton.classList.remove('selected');
             saveToLocalStorage();
@@ -859,6 +878,61 @@ function createDishButton(dish, category, dishesRow) {
         }
     }
     
+    // 副菜と主菜に数量管理機能を追加
+    const isQuantityCategory = category === '副菜' || category === '主菜';
+    const quantityKey = `${category}_${dish.dish}`;
+    
+    if (isQuantityCategory) {
+        // 数量バッジを追加
+        const quantityBadge = document.createElement('div');
+        quantityBadge.className = 'quantity-badge';
+        quantityBadge.style.display = 'none';
+        quantityBadge.textContent = '×1';
+        button.appendChild(quantityBadge);
+        
+        // 数量コントロールボタンを追加
+        const quantityControls = document.createElement('div');
+        quantityControls.className = 'quantity-controls';
+        quantityControls.style.display = 'none';
+        
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'quantity-btn';
+        minusBtn.textContent = '−';
+        minusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const currentQty = dishQuantities[quantityKey] || 0;
+            if (currentQty > 1) {
+                dishQuantities[quantityKey] = currentQty - 1;
+                quantityBadge.textContent = `×${dishQuantities[quantityKey]}`;
+            } else if (currentQty === 1) {
+                // 数量が1の場合は選択を解除
+                delete dishQuantities[quantityKey];
+                button.classList.remove('selected');
+                quantityBadge.style.display = 'none';
+                quantityControls.style.display = 'none';
+                selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
+            }
+            saveToLocalStorage();
+            updateNutrition();
+        });
+        
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'quantity-btn';
+        plusBtn.textContent = '＋';
+        plusBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const currentQty = dishQuantities[quantityKey] || 0;
+            dishQuantities[quantityKey] = currentQty + 1;
+            quantityBadge.textContent = `×${dishQuantities[quantityKey]}`;
+            saveToLocalStorage();
+            updateNutrition();
+        });
+        
+        quantityControls.appendChild(minusBtn);
+        quantityControls.appendChild(plusBtn);
+        button.appendChild(quantityControls);
+    }
+    
     // 複数選択対応
     button.addEventListener('click', () => {
         // 販売中止の場合はクリック不可
@@ -872,13 +946,23 @@ function createDishButton(dish, category, dishesRow) {
         const isSingleSelectCategory = category === 'ベース'; // ベースのみ1つだけ
         
         if (isSelected) {
-            // 選択を解除
-            button.classList.remove('selected');
-            const selectedIndicator = button.querySelector('.selected-indicator');
-            if (selectedIndicator) {
-                selectedIndicator.style.display = 'none';
+            if (isQuantityCategory) {
+                // 副菜・主菜の場合は数量を増やす
+                const currentQty = dishQuantities[quantityKey] || 1;
+                dishQuantities[quantityKey] = currentQty + 1;
+                const quantityBadge = button.querySelector('.quantity-badge');
+                if (quantityBadge) {
+                    quantityBadge.textContent = `×${dishQuantities[quantityKey]}`;
+                }
+            } else {
+                // その他のカテゴリーは選択を解除
+                button.classList.remove('selected');
+                const selectedIndicator = button.querySelector('.selected-indicator');
+                if (selectedIndicator) {
+                    selectedIndicator.style.display = 'none';
+                }
+                selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
             }
-            selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
         } else {
             // 選択を追加
             // 単一選択カテゴリー（ベースのみ）の場合、他の選択を解除
@@ -908,6 +992,20 @@ function createDishButton(dish, category, dishesRow) {
             }
             if (!selectedDishes[category].includes(dish.dish)) {
                 selectedDishes[category].push(dish.dish);
+            }
+            
+            // 副菜・主菜の場合は数量を1に設定し、バッジとボタンを表示
+            if (isQuantityCategory) {
+                dishQuantities[quantityKey] = 1;
+                const quantityBadge = button.querySelector('.quantity-badge');
+                const quantityControls = button.querySelector('.quantity-controls');
+                if (quantityBadge) {
+                    quantityBadge.style.display = 'flex';
+                    quantityBadge.textContent = '×1';
+                }
+                if (quantityControls) {
+                    quantityControls.style.display = 'flex';
+                }
             }
         }
         
@@ -1008,6 +1106,16 @@ function setupClearAllButton() {
                         if (indicator) {
                             indicator.style.display = 'none';
                         }
+                        
+                        // 数量バッジとボタンを非表示
+                        const quantityBadge = btn.querySelector('.quantity-badge');
+                        const quantityControls = btn.querySelector('.quantity-controls');
+                        if (quantityBadge) {
+                            quantityBadge.style.display = 'none';
+                        }
+                        if (quantityControls) {
+                            quantityControls.style.display = 'none';
+                        }
                     });
                 }
                 
@@ -1018,6 +1126,9 @@ function setupClearAllButton() {
                 }
             }
         });
+        
+        // 数量データもクリア
+        dishQuantities = {};
         
         // ローカルストレージに保存
         saveToLocalStorage();
@@ -1227,12 +1338,14 @@ async function updateDishStatusOnFirestore(dish, isDiscontinued) {
 function saveToLocalStorage() {
     localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(customDishes));
     localStorage.setItem(STORAGE_KEY_SELECTED, JSON.stringify(selectedDishes));
+    localStorage.setItem(STORAGE_KEY_QUANTITIES, JSON.stringify(dishQuantities));
     localStorage.setItem(STORAGE_KEY_DISCONTINUED, JSON.stringify(discontinuedDishes));
     localStorage.setItem(STORAGE_KEY_LARGE_PORTION, JSON.stringify(largePortionDishes));
-    
+
     // SessionStorage バックアップ
     sessionStorage.setItem(BACKUP_KEY, JSON.stringify(customDishes));
     sessionStorage.setItem(STORAGE_KEY_SELECTED + '_backup', JSON.stringify(selectedDishes));
+    sessionStorage.setItem(STORAGE_KEY_QUANTITIES + '_backup', JSON.stringify(dishQuantities));
     sessionStorage.setItem(STORAGE_KEY_DISCONTINUED, JSON.stringify(discontinuedDishes));
     sessionStorage.setItem(STORAGE_KEY_LARGE_PORTION + '_backup', JSON.stringify(largePortionDishes));
     sessionStorage.setItem(BACKUP_TIMESTAMP_KEY, Date.now().toString());
@@ -1321,6 +1434,17 @@ function loadFromLocalStorage() {
         }
     }
     
+    // 数量の状態を復元
+    const savedQuantities = localStorage.getItem(STORAGE_KEY_QUANTITIES);
+    if (savedQuantities) {
+        try {
+            dishQuantities = JSON.parse(savedQuantities);
+        } catch (e) {
+            console.error('数量状態の読み込みエラー:', e);
+            dishQuantities = {};
+        }
+    }
+    
     // 大盛りの状態を復元（料理ごと）
     const savedLargePortion = localStorage.getItem(STORAGE_KEY_LARGE_PORTION);
     if (savedLargePortion) {
@@ -1347,6 +1471,21 @@ function restoreUISelection() {
             const dishName = btn.getAttribute('data-dish-name'); // data属性から取得
             if (dishNames.includes(dishName)) {
                 btn.classList.add('selected');
+                
+                // 副菜・主菜の場合は数量バッジを表示
+                if (category === '副菜' || category === '主菜') {
+                    const quantityKey = `${category}_${dishName}`;
+                    const quantity = dishQuantities[quantityKey] || 1;
+                    const quantityBadge = btn.querySelector('.quantity-badge');
+                    const quantityControls = btn.querySelector('.quantity-controls');
+                    if (quantityBadge) {
+                        quantityBadge.style.display = 'flex';
+                        quantityBadge.textContent = `×${quantity}`;
+                    }
+                    if (quantityControls) {
+                        quantityControls.style.display = 'flex';
+                    }
+                }
             } else {
                 btn.classList.remove('selected');
             }
@@ -1467,11 +1606,15 @@ function updateNutrition() {
                     calories = data.calories || 0;
                 }
                 
+                // 数量を考慮（副菜と主菜のみ）
+                const quantityKey = `${category}_${dishName}`;
+                const quantity = (category === '副菜' || category === '主菜') ? (dishQuantities[quantityKey] || 1) : 1;
+                
                 // 値が有効な数値かチェックし、そうでない場合は0として扱う
-                totalProtein += (isNaN(protein) || protein === undefined || protein === null) ? 0 : parseFloat(protein);
-                totalFat += (isNaN(fat) || fat === undefined || fat === null) ? 0 : parseFloat(fat);
-                totalCarbs += (isNaN(carbs) || carbs === undefined || carbs === null) ? 0 : parseFloat(carbs);
-                totalCalories += (isNaN(calories) || calories === undefined || calories === null) ? 0 : parseFloat(calories);
+                totalProtein += ((isNaN(protein) || protein === undefined || protein === null) ? 0 : parseFloat(protein)) * quantity;
+                totalFat += ((isNaN(fat) || fat === undefined || fat === null) ? 0 : parseFloat(fat)) * quantity;
+                totalCarbs += ((isNaN(carbs) || carbs === undefined || carbs === null) ? 0 : parseFloat(carbs)) * quantity;
+                totalCalories += ((isNaN(calories) || calories === undefined || calories === null) ? 0 : parseFloat(calories)) * quantity;
             }
         });
     });
