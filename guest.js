@@ -404,6 +404,10 @@ function init() {
         if (dishButtons.length > 0) {
             setupDishIndicator(dishesRow, dishButtons, category);
         }
+        // 横にスクロールして他の選択肢を見られることを知らせるヒント
+        if (dishButtons.length > 1) {
+            setupSwipeHint(dishesRow, categoryRow, category);
+        }
         // if (dishButtons.length > 1) {
         //     setupInfiniteScroll(dishesRow, dishButtons, category);
         // }
@@ -2346,6 +2350,68 @@ function setupDishIndicator(dishesRow, dishButtons, category) {
             console.error('setupDishIndicator: Indicator is hidden by CSS!');
         }
     }, 200);
+}
+
+// 横スクロールで他の選択肢が隠れていることを知らせるスワイプヒント
+function setupSwipeHint(dishesRow, categoryRow, category) {
+    const hint = document.createElement('div');
+    hint.className = 'swipe-hint';
+    hint.setAttribute('data-category', category);
+    hint.innerHTML = `
+        <div class="swipe-hint-inner">
+            <span class="swipe-hint-hand">👆</span>
+            <span class="swipe-hint-text">スワイプで他の選択肢</span>
+            <span class="swipe-hint-arrow">→</span>
+        </div>`;
+    categoryRow.appendChild(hint);
+
+    // 料理ボタンの列に重なるようにヒントを縦方向で配置
+    const positionHint = () => {
+        hint.style.top = (dishesRow.offsetTop + dishesRow.offsetHeight / 2) + 'px';
+    };
+
+    // 横スクロールできる余地があるか（隠れた選択肢があるか）
+    const canScroll = () => (dishesRow.scrollWidth - dishesRow.clientWidth) > 8;
+
+    let autoHideTimer = null;
+    const hide = () => {
+        clearTimeout(autoHideTimer);
+        hint.classList.remove('show');
+    };
+    const show = () => {
+        if (!canScroll()) return;
+        positionHint();
+        hint.classList.add('show');
+        clearTimeout(autoHideTimer);
+        autoHideTimer = setTimeout(hide, 6000);
+    };
+
+    // ユーザーが少しでもスクロール/タッチしたらヒントを消す
+    dishesRow.addEventListener('scroll', () => {
+        if (dishesRow.scrollLeft > 4) hide();
+    }, { passive: true });
+    dishesRow.addEventListener('touchstart', hide, { passive: true });
+
+    // カテゴリーが画面に入った最初のタイミングで一度だけ表示
+    if ('IntersectionObserver' in window) {
+        let shown = false;
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !shown) {
+                    shown = true;
+                    show();
+                    obs.disconnect();
+                }
+            });
+        }, { threshold: 0.4 });
+        observer.observe(categoryRow);
+    } else {
+        setTimeout(show, 600);
+    }
+
+    window.addEventListener('resize', () => {
+        if (hint.classList.contains('show')) positionHint();
+    });
 }
 
 // ==================== ページロード ====================
