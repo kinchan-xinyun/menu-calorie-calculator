@@ -185,7 +185,7 @@ async function loadFromFirestore() {
                 // グラム数情報のデフォルト値を設定
                 let largeGrams = data.largeGrams || '';
                 if (!largeGrams) {
-                    if (dishName === 'ライス') {
+                    if (dishName === 'ライス(200g)') {
                         largeGrams = '+100g';
                     } else if (dishName === 'サラダ') {
                         largeGrams = '+40g';
@@ -703,7 +703,7 @@ function createDishButton(dish, category, dishesRow) {
     let largePortionCheckbox = null;
     if (category === 'ベース') {
         // ライス＋サラダの場合もライスの大盛りチェックボックスのみ表示
-        if (dish.dish === 'ライスとサラダ') {
+        if (dish.dish === 'ライス(120g)とサラダ') {
             // ライス用チェックボックス
             const riceCheckboxContainer = document.createElement('div');
             riceCheckboxContainer.className = 'large-portion-container';
@@ -790,7 +790,7 @@ function createDishButton(dish, category, dishesRow) {
     // ベースカテゴリーのチェックボックスのイベントリスナー
     if (largePortionCheckbox) {
         // ライス＋サラダの場合（ライスの大盛りのみ）
-        if (dish.dish === 'ライスとサラダ') {
+        if (dish.dish === 'ライス(120g)とサラダ') {
             largePortionCheckbox.addEventListener('change', (e) => {
                 e.stopPropagation();
                 
@@ -1504,7 +1504,7 @@ function restoreUISelection() {
             const dishName = button.getAttribute('data-dish-name');
             
             // ライス＋サラダの場合はライスのチェックボックスのみ復元
-            if (dishName === 'ライスとサラダ') {
+            if (dishName === 'ライス(120g)とサラダ') {
                 const riceCheckbox = button.querySelector('[data-portion-type="rice"]');
                 const dish = nutritionData.find(d => d.dish === dishName && d.category === 'ベース');
                 
@@ -1582,7 +1582,7 @@ function updateNutrition() {
                 let protein, fat, carbs, calories;
                 
                 // ライス＋サラダの場合は特別な処理（ライス＋サラダ自体の大盛り数値を使用）
-                if (category === 'ベース' && dishName === 'ライスとサラダ') {
+                if (category === 'ベース' && dishName === 'ライス(120g)とサラダ') {
                     // 基本の値（ライス＋サラダの通常サイズ）
                     protein = data.protein || 0;
                     fat = data.fat || 0;
