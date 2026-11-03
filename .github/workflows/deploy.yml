@@ -30,12 +30,13 @@ jobs:
           cat > firebase-config.js << 'EOF'
           // Firebase Configuration
           const firebaseConfig = {
-              apiKey: "${{ secrets.FIREBASE_API_KEY }}",
-              authDomain: "${{ secrets.FIREBASE_AUTH_DOMAIN }}",
-              projectId: "${{ secrets.FIREBASE_PROJECT_ID }}",
-              storageBucket: "${{ secrets.FIREBASE_STORAGE_BUCKET }}",
-              messagingSenderId: "${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}",
-              appId: "${{ secrets.FIREBASE_APP_ID }}"
+              apiKey: "AIzaSyAkTHmx9WH-jGrztPlBlgDlu7cFmpgVE2c",
+              authDomain: "menu-calorie-calculator-6934f.firebaseapp.com",
+              projectId: "menu-calorie-calculator-6934f",
+              storageBucket: "menu-calorie-calculator-6934f.firebasestorage.app",
+              messagingSenderId: "1000754816280",
+              appId: "1:1000754816280:web:2880cc9704c3f6339d6a6d",
+              measurementId: "G-6FBMLPWRVY"
           };
           EOF
 
