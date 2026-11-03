@@ -4,6 +4,7 @@ let selectedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 let dishQuantities = {}; // { 'category_dishName': quantity } 各料理の数量
 let currentCategory = null;
 let editingDish = null;
+let imageCompressionToken = 0;
 let customDishes = {};
 let discontinuedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 let largePortionDishes = {}; // { dishName: true/false } 各料理の大盛り状態
@@ -13,6 +14,7 @@ const ADMIN_EMAILS = new Set([
     'kinchan.xinyun@gmail.com',
     'rei.yoshioka@kindonichi.com'
 ]);
+const MAX_IMAGE_DATA_URL_LENGTH = 800 * 1024;
 
 // LocalStorage キー
 const STORAGE_KEY_CUSTOM = 'customDishes';
@@ -1088,7 +1090,63 @@ function openEditDishModal(dish) {
     document.getElementById('addDishModal').classList.add('show');
 }
 
+function loadImageForCompression(source) {
+    return new Promise((resolve, reject) => {
+        const objectUrl = source instanceof Blob ? URL.createObjectURL(source) : null;
+        const image = new Image();
+        const cleanup = () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+
+        image.onload = () => {
+            cleanup();
+            resolve(image);
+        };
+        image.onerror = () => {
+            cleanup();
+            reject(new Error('画像を読み込めませんでした。JPEG、PNG、WebP画像を選んでください。'));
+        };
+        image.src = objectUrl || source;
+    });
+}
+
+function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('圧縮画像を読み込めませんでした。'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function compressImageForFirestore(source) {
+    const image = await loadImageForCompression(source);
+    const initialScale = Math.min(1, 1280 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    if (!context) throw new Error('画像圧縮を開始できませんでした。');
+
+    for (const scale of [initialScale, initialScale * 0.8, initialScale * 0.6, initialScale * 0.45]) {
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        for (const quality of [0.82, 0.7, 0.58, 0.46]) {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', quality));
+            if (!blob) continue;
+
+            const dataUrl = await blobToDataUrl(blob);
+            if (dataUrl.length <= MAX_IMAGE_DATA_URL_LENGTH) return dataUrl;
+        }
+    }
+
+    throw new Error('画像をFirestoreの保存上限以下に圧縮できませんでした。別の画像を選んでください。');
+}
+
 function resetFormFields() {
+    imageCompressionToken++;
     document.getElementById('dishName').value = '';
     document.getElementById('calories').value = '';
     document.getElementById('protein').value = '';
@@ -1101,7 +1159,9 @@ function resetFormFields() {
     document.getElementById('largeGrams').value = '';
     document.getElementById('salt').value = '';
     document.getElementById('imageInput').value = '';
-    document.getElementById('modalSubmit').textContent = '追加';
+    const modalSubmit = document.getElementById('modalSubmit');
+    modalSubmit.textContent = '追加';
+    modalSubmit.disabled = false;
     
     const imagePreview = document.getElementById('imagePreview');
     imagePreview.classList.add('empty');
@@ -1110,6 +1170,7 @@ function resetFormFields() {
     // Base64データをクリア
     const imageInput = document.getElementById('imageInput');
     delete imageInput.dataset.base64;
+    delete imageInput.dataset.compressionPending;
 }
 
 function setupModal() {
@@ -1120,17 +1181,37 @@ function setupModal() {
     const imageInput = document.getElementById('imageInput');
     
     // 画像アップロード
-    imageInput.addEventListener('change', (e) => {
+    imageInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imagePreview = document.getElementById('imagePreview');
-                imagePreview.classList.remove('empty');
-                imagePreview.innerHTML = `<img src="${event.target.result}" />`;
-                imageInput.dataset.base64 = event.target.result;
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        const token = ++imageCompressionToken;
+        const imagePreview = document.getElementById('imagePreview');
+        delete imageInput.dataset.base64;
+        imageInput.dataset.compressionPending = 'true';
+        imagePreview.classList.remove('empty');
+        imagePreview.textContent = '画像を圧縮しています...';
+        modalSubmit.disabled = true;
+
+        try {
+            const compressedImage = await compressImageForFirestore(file);
+            if (token !== imageCompressionToken) return;
+
+            imageInput.dataset.base64 = compressedImage;
+            const previewImage = document.createElement('img');
+            previewImage.src = compressedImage;
+            previewImage.alt = '';
+            imagePreview.replaceChildren(previewImage);
+        } catch (error) {
+            if (token === imageCompressionToken) {
+                imagePreview.textContent = error.message;
+                alert(error.message);
+            }
+        } finally {
+            if (token === imageCompressionToken) {
+                delete imageInput.dataset.compressionPending;
+                modalSubmit.disabled = false;
+            }
         }
     });
     
@@ -1219,11 +1300,22 @@ async function addNewDish() {
     const largeGrams = document.getElementById('largeGrams').value.trim();
     const salt = parseFloat(document.getElementById('salt').value) || 0;
     const imageInput = document.getElementById('imageInput');
-    const imageBase64 = imageInput.dataset.base64 || '';
+    if (imageInput.dataset.compressionPending === 'true') return;
+    let imageBase64 = imageInput.dataset.base64 || '';
     
     if (!dishName || calories === 0) {
         alert('料理名とカロリーは必須です');
         return;
+    }
+
+    if (imageBase64.startsWith('data:image/') && imageBase64.length > MAX_IMAGE_DATA_URL_LENGTH) {
+        try {
+            imageBase64 = await compressImageForFirestore(imageBase64);
+            imageInput.dataset.base64 = imageBase64;
+        } catch (error) {
+            alert(error.message);
+            return;
+        }
     }
     
     const newDish = {
@@ -2752,7 +2844,7 @@ function initializeAdminAccess() {
             } else if (error.code === 'auth/configuration-not-found') {
                 authMessage.textContent = 'Firebase Authenticationの初期設定が未完了です。Firebase ConsoleでAuthenticationを開始してください。';
             } else if (error.code === 'auth/unauthorized-domain') {
-                authMessage.textContent = `このサイトのドメインが未承認です (${error.code}): ${error.message}`;
+                authMessage.textContent = `このサイトのドメインが未承認です (${error.code})。承認済みドメインに「${window.location.hostname}」を追加してください。`;
             } else {
                 authMessage.textContent = `ログインできませんでした (${error.code || 'unknown'}): ${error.message}`;
             }
