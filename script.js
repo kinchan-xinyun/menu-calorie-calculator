@@ -3,9 +3,16 @@ let nutritionData = [];
 let selectedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 let dishQuantities = {}; // { 'category_dishName': quantity } 各料理の数量
 let currentCategory = null;
+let editingDish = null;
 let customDishes = {};
 let discontinuedDishes = {}; // { category: ['dish1', 'dish2', ...] }
 let largePortionDishes = {}; // { dishName: true/false } 各料理の大盛り状態
+let adminAuth = null;
+let adminAppInitialized = false;
+const ADMIN_EMAILS = new Set([
+    'kinchan.xinyun@gmail.com',
+    'rei.yoshioka@kindonichi.com'
+]);
 
 // LocalStorage キー
 const STORAGE_KEY_CUSTOM = 'customDishes';
@@ -16,12 +23,17 @@ const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
 const STORAGE_KEY_LARGE_PORTION = 'largePortionDishes';
 
-// Firebase Configuration は firebase-config.js から読み込まれます
-// firebaseConfig は外部ファイルで定義されています
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// Firebase Configuration は任意の firebase-config.js から読み込まれます
+let db = null;
+if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        adminAuth = firebase.auth();
+    } catch (error) {
+        console.warn('Firebaseを初期化できないため、CSVを使用します:', error);
+    }
+}
 
 // カテゴリ名のマッピング（日本語 → 英語）
 const categoryNameMap = {
@@ -32,6 +44,7 @@ const categoryNameMap = {
     'その他': { en: 'EXTRAS', ja: 'その他' },
     'SOUP': { en: 'SOUP', ja: 'スープ' },
     'DRINK': { en: 'DRINK', ja: 'ドリンク' },
+    'ベーグル': { en: 'BAGEL', ja: 'ベーグル' },
     // 旧カテゴリ名（互換性のため）
     'ごはん': { en: 'RICE', ja: 'ごはん' },
     'サラダ': { en: 'SALAD', ja: 'サラダ' },
@@ -42,7 +55,7 @@ const categoryNameMap = {
 };
 
 // カテゴリーの順序（メイン画面とナビゲーションの順序）
-const categoryOrder = ['ベース', 'ドレッシング', '副菜', '主菜', 'SOUP', 'DRINK', 'その他'];
+const categoryOrder = ['ベース', 'ドレッシング', '副菜', '主菜', 'SOUP', 'DRINK', 'その他', 'ベーグル'];
 
 // フロー図の順序（元の順序を維持）
 const categoryFlowOrder = ['ベース', '副菜', '主菜', 'SOUP', 'DRINK'];
@@ -80,12 +93,8 @@ function parseCSVLine(line) {
     return result;
 }
 
-function sanitizeFilename(filename) {
-    return filename
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '_')
-        .replace(/-+/g, '_');
+function getDishImageSource(dish) {
+    return dish.image || 'images/unselected-dish.webp';
 }
 
 async function loadCSV() {
@@ -135,6 +144,7 @@ function parseCSV(csvText) {
             const largeGrams = values[10] ? values[10].trim() : '';
             
             const imagePath = values[11] ? values[11].trim() : '';
+            const salt = values[14] ? parseFloat(values[14]) : 0;
             const displayOrder = values[13] ? parseInt(values[13]) : 999;
             
             // カテゴリー名を変換（マッピングがある場合）
@@ -156,32 +166,51 @@ function parseCSV(csvText) {
                 largeCalories: largeCalories,
                 largeGrams: largeGrams,
                 image: imagePath,
+                salt: salt,
                 displayOrder: displayOrder
             });
         }
     }
 }
 
+function getDeletedDishKey(category, dish) {
+    return encodeURIComponent(`${category}::${dish}`);
+}
+
 // ==================== Firestore から読み込み ====================
 async function loadFromFirestore() {
+    nutritionData = [];
+    await loadCSV();
+
+    if (!db) {
+        return;
+    }
+
     try {
         console.log('Loading data from Firestore...');
-        
-        const snapshot = await db.collection('menuItems').get();
-        
-        if (!snapshot.empty) {
-            nutritionData = [];
-            discontinuedDishes = {}; 
-            
-            snapshot.forEach((doc) => {
+        const [snapshot, deletedSnapshot] = await Promise.all([
+            db.collection('menuItems').get(),
+            db.collection('deletedMenuItems').get()
+        ]);
+        const deletedKeys = new Set();
+        deletedSnapshot.forEach(doc => {
+            const data = doc.data();
+            deletedKeys.add(getDeletedDishKey(data.category, data.dishName || data.dish));
+        });
+        nutritionData = nutritionData.filter(item => !deletedKeys.has(getDeletedDishKey(item.category, item.dish)));
+        discontinuedDishes = {};
+
+        snapshot.forEach((doc) => {
                 const data = doc.data();
                 const protein = data.protein || 0;
                 const fat = data.fat || 0;
                 const carbs = data.carbohydrates || data.carbs || 0;
                 const calories = data.totalCalories || data.calories || 0;
-                
                 const dishName = data.dishName || data.dish;
-                
+                const dishKey = getDeletedDishKey(data.category, dishName);
+                if (deletedKeys.has(dishKey) || data.status === '削除') return;
+                nutritionData = nutritionData.filter(item => item.category !== data.category || item.dish !== dishName);
+
                 // グラム数情報のデフォルト値を設定
                 let largeGrams = data.largeGrams || '';
                 if (!largeGrams) {
@@ -191,7 +220,6 @@ async function loadFromFirestore() {
                         largeGrams = '+40g';
                     }
                 }
-                
                 nutritionData.push({
                     id: doc.id,
                     category: data.category,
@@ -207,6 +235,7 @@ async function loadFromFirestore() {
                     largeCalories: data.largeTotalCalories || data.largeCalories || 0,
                     largeGrams: largeGrams,
                     image: data.imageUrl || data.image || '',  // Firestoreのフィールド名に対応
+                    salt: data.salt || 0,
                     status: data.status || '販売中',
                     displayOrder: data.displayOrder || 999
                 });
@@ -221,16 +250,11 @@ async function loadFromFirestore() {
                         discontinuedDishes[data.category].push(dishName);
                     }
                 }
-            });
-            
-            console.log('Data loaded from Firestore:', nutritionData.length, 'items');
-        } else {
-            console.warn('No data from Firestore, using CSV fallback');
-            await loadCSV();
-        }
+        });
+
+        console.log('Menu data loaded:', nutritionData.length, 'items');
     } catch (error) {
         console.error('Firestoreからの読み込みに失敗。CSVから読み込みます:', error);
-        await loadCSV();
     }
 }
 
@@ -393,26 +417,20 @@ function init() {
             currentCategory = category;
             openAddDishModal(category);
         });
+        dishesRow.appendChild(addButton);
         
         categoryRow.appendChild(categoryLabel);
         categoryRow.appendChild(dishesRow);
         categoryRow.appendChild(clearButton);
-        // categoryRow.appendChild(addButton);
         container.appendChild(categoryRow);
         
         // インジケーターのみ有効化（無限ループと拡大機能は無効）
         if (dishButtons.length > 0) {
             setupDishIndicator(dishesRow, dishButtons, category);
         }
-        // 横にスクロールして他の選択肢を見られることを知らせるヒント
         if (dishButtons.length > 1) {
             setupSwipeHint(dishesRow, categoryRow, category);
         }
-        if (dishButtons.length > 1) {
-            setupInfiniteScroll(dishesRow, dishButtons, category);
-        }
-        setupDishCenterObserver(dishesRow);
-        
         // カテゴリ間に矢印を追加（最後のカテゴリ以外）
         if (index < orderedCategories.length - 1) {
             const arrow = document.createElement('div');
@@ -581,13 +599,7 @@ function createDishButton(dish, category, dishesRow) {
     const img = document.createElement('img');
     img.className = 'dish-button-img';
     
-    if (dish.image && dish.image.startsWith('data:image')) {
-        img.src = dish.image; // Base64画像をそのまま使用
-    } else if (dish.image) {
-        img.src = dish.image; // パスを使用
-    } else {
-        img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
-    }
+    img.src = getDishImageSource(dish);
     
     img.alt = dish.dish;
     img.onerror = function() {
@@ -769,20 +781,30 @@ function createDishButton(dish, category, dishesRow) {
         toggleDiscontinued(category, dish);
     });
     actionContainer.appendChild(discontinueBtn);
-    
-    // カスタム料理の場合は削除ボタンを追加
-    if (isCustom) {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'status-button delete-button';
-        deleteBtn.textContent = '✕';
-        deleteBtn.title = '削除';
-        deleteBtn.type = 'button';
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteDish(category, dish);
-        });
-        actionContainer.appendChild(deleteBtn);
-    }
+
+    const editButton = document.createElement('button');
+    editButton.className = 'status-button edit-button';
+    editButton.textContent = '編集';
+    editButton.title = 'メニュー情報を編集';
+    editButton.setAttribute('aria-label', `${dish.dish}を編集`);
+    editButton.type = 'button';
+    editButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditDishModal(dish);
+    });
+    actionContainer.appendChild(editButton);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'status-button delete-button';
+    deleteBtn.textContent = '削除';
+    deleteBtn.title = '完全に削除';
+    deleteBtn.setAttribute('aria-label', `${dish.dish}を完全に削除`);
+    deleteBtn.type = 'button';
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteDish(category, dish);
+    });
+    actionContainer.appendChild(deleteBtn);
     
     button.appendChild(actionContainer);
     
@@ -1027,6 +1049,7 @@ function createDishButton(dish, category, dishesRow) {
 // ==================== モーダル管理 ====================
 
 function openAddDishModal(category) {
+    editingDish = null;
     const modal = document.getElementById('addDishModal');
     const modalTitle = document.getElementById('modalTitle');
     
@@ -1035,13 +1058,50 @@ function openAddDishModal(category) {
     modal.classList.add('show');
 }
 
+function openEditDishModal(dish) {
+    editingDish = dish;
+    currentCategory = dish.category;
+    resetFormFields();
+
+    document.getElementById('modalTitle').textContent = `${dish.dish} を編集`;
+    document.getElementById('modalSubmit').textContent = '変更を保存';
+    document.getElementById('dishName').value = dish.dish;
+    document.getElementById('calories').value = dish.calories || 0;
+    document.getElementById('protein').value = dish.protein || 0;
+    document.getElementById('fat').value = dish.fat || 0;
+    document.getElementById('carbs').value = dish.carbs || 0;
+    document.getElementById('largeProtein').value = dish.largeProtein || 0;
+    document.getElementById('largeFat').value = dish.largeFat || 0;
+    document.getElementById('largeCarbs').value = dish.largeCarbs || 0;
+    document.getElementById('largeCalories').value = dish.largeCalories || 0;
+    document.getElementById('largeGrams').value = dish.largeGrams || '';
+    document.getElementById('salt').value = dish.salt || 0;
+
+    const imageInput = document.getElementById('imageInput');
+    imageInput.dataset.base64 = dish.image || '';
+    if (dish.image) {
+        const imagePreview = document.getElementById('imagePreview');
+        imagePreview.classList.remove('empty');
+        imagePreview.innerHTML = `<img src="${dish.image}" alt="">`;
+    }
+
+    document.getElementById('addDishModal').classList.add('show');
+}
+
 function resetFormFields() {
     document.getElementById('dishName').value = '';
     document.getElementById('calories').value = '';
     document.getElementById('protein').value = '';
     document.getElementById('fat').value = '';
     document.getElementById('carbs').value = '';
+    document.getElementById('largeProtein').value = '';
+    document.getElementById('largeFat').value = '';
+    document.getElementById('largeCarbs').value = '';
+    document.getElementById('largeCalories').value = '';
+    document.getElementById('largeGrams').value = '';
+    document.getElementById('salt').value = '';
     document.getElementById('imageInput').value = '';
+    document.getElementById('modalSubmit').textContent = '追加';
     
     const imagePreview = document.getElementById('imagePreview');
     imagePreview.classList.add('empty');
@@ -1146,12 +1206,18 @@ function setupClearAllButton() {
     });
 }
 
-function addNewDish() {
+async function addNewDish() {
     const dishName = document.getElementById('dishName').value.trim();
     const calories = parseFloat(document.getElementById('calories').value) || 0;
     const protein = parseFloat(document.getElementById('protein').value) || 0;
     const fat = parseFloat(document.getElementById('fat').value) || 0;
     const carbs = parseFloat(document.getElementById('carbs').value) || 0;
+    const largeProtein = parseFloat(document.getElementById('largeProtein').value) || 0;
+    const largeFat = parseFloat(document.getElementById('largeFat').value) || 0;
+    const largeCarbs = parseFloat(document.getElementById('largeCarbs').value) || 0;
+    const largeCalories = parseFloat(document.getElementById('largeCalories').value) || 0;
+    const largeGrams = document.getElementById('largeGrams').value.trim();
+    const salt = parseFloat(document.getElementById('salt').value) || 0;
     const imageInput = document.getElementById('imageInput');
     const imageBase64 = imageInput.dataset.base64 || '';
     
@@ -1167,105 +1233,133 @@ function addNewDish() {
         fat: fat,
         carbs: carbs,
         calories: calories,
-        image: imageBase64
+        largeProtein,
+        largeFat,
+        largeCarbs,
+        largeCalories,
+        largeGrams,
+        salt,
+        image: imageBase64,
+        status: editingDish ? editingDish.status || '販売中' : '販売中',
+        displayOrder: editingDish ? editingDish.displayOrder || 999 : 999
     };
-    
-    // データに追加
-    nutritionData.push(newDish);
-    customDishes[currentCategory].push(newDish);
-    
-    // Firestoreに追加
-    saveToFirestore(newDish);
-    
-    // UIに追加
-    const categoryRow = document.querySelector(`[data-category="${currentCategory}"]`);
-    const dishesRow = categoryRow.querySelector('.dishes-row');
-    const addButton = dishesRow.querySelector('.add-button');
-    
-    const button = createDishButton(newDish, currentCategory, dishesRow);
-    dishesRow.insertBefore(button, addButton);
-    
+
+    const previousDish = editingDish;
+    if (!await saveToFirestore(newDish, previousDish)) return;
+
+    if (previousDish) {
+        const index = nutritionData.findIndex(item => item.category === previousDish.category && item.dish === previousDish.dish);
+        if (index >= 0) nutritionData[index] = newDish;
+        if (customDishes[currentCategory]) {
+            customDishes[currentCategory] = customDishes[currentCategory].map(item => item.dish === previousDish.dish ? newDish : item);
+        }
+        if (previousDish.dish !== newDish.dish) {
+            selectedDishes[currentCategory] = (selectedDishes[currentCategory] || []).map(name => name === previousDish.dish ? newDish.dish : name);
+            const oldQuantityKey = `${currentCategory}_${previousDish.dish}`;
+            const newQuantityKey = `${currentCategory}_${newDish.dish}`;
+            if (dishQuantities[oldQuantityKey] !== undefined) {
+                dishQuantities[newQuantityKey] = dishQuantities[oldQuantityKey];
+                delete dishQuantities[oldQuantityKey];
+            }
+            if (discontinuedDishes[currentCategory]) {
+                discontinuedDishes[currentCategory] = discontinuedDishes[currentCategory].map(name => name === previousDish.dish ? newDish.dish : name);
+            }
+            for (const suffix of ['', '_rice']) {
+                const oldLargeKey = previousDish.dish + suffix;
+                const newLargeKey = newDish.dish + suffix;
+                if (largePortionDishes[oldLargeKey] !== undefined) {
+                    largePortionDishes[newLargeKey] = largePortionDishes[oldLargeKey];
+                    delete largePortionDishes[oldLargeKey];
+                }
+            }
+        }
+    } else {
+        nutritionData.push(newDish);
+        customDishes[currentCategory] = customDishes[currentCategory] || [];
+        customDishes[currentCategory].push(newDish);
+    }
+
     saveToLocalStorage();
-    
-    const modal = document.getElementById('addDishModal');
-    modal.classList.remove('show');
+    editingDish = null;
+    location.reload();
 }
 
-async function saveToFirestore(dish) {
+async function saveToFirestore(dish, previousDish = null) {
+    if (!db) return false;
+
     try {
-        // ドキュメントIDを生成（料理名）
-        const docId = `${dish.dish}`;
-        
-        await db.collection('menuItems').doc(docId).set({
+        const newKey = getDeletedDishKey(dish.category, dish.dish);
+        await db.collection('menuItems').doc(dish.dish).set({
             category: dish.category,
-            dishName: dish.dish,  // 内部的には dish.dish だが、Firestoreには dishName として保存
+            dishName: dish.dish,
             protein: dish.protein,
             fat: dish.fat,
-            carbohydrates: dish.carbs,  // 内部的には carbs だが、Firestoreには carbohydrates として保存
-            totalCalories: dish.calories,  // 内部的には calories だが、Firestoreには totalCalories として保存
-            // 大盛りの栄養情報も保存
-            largeProtein: dish.largeProtein || dish.protein,
-            largeFat: dish.largeFat || dish.fat,
-            largeCarbohydrates: dish.largeCarbs || dish.carbs,
-            largeTotalCalories: dish.largeCalories || dish.calories,
+            carbohydrates: dish.carbs,
+            totalCalories: dish.calories,
+            largeProtein: dish.largeProtein || 0,
+            largeFat: dish.largeFat || 0,
+            largeCarbohydrates: dish.largeCarbs || 0,
+            largeTotalCalories: dish.largeCalories || 0,
             largeGrams: dish.largeGrams || '',
-            imageUrl: dish.image || '',  // 内部的には image だが、Firestoreには imageUrl として保存
-            status: '販売中'
+            imageUrl: dish.image || '',
+            salt: dish.salt || 0,
+            status: dish.status || '販売中',
+            displayOrder: dish.displayOrder || 999
         });
-        
-        console.log('Dish saved to Firestore:', dish);
+        await db.collection('deletedMenuItems').doc(newKey).delete();
+
+        if (previousDish && (previousDish.category !== dish.category || previousDish.dish !== dish.dish)) {
+            const oldKey = getDeletedDishKey(previousDish.category, previousDish.dish);
+            await db.collection('deletedMenuItems').doc(oldKey).set({
+                category: previousDish.category,
+                dishName: previousDish.dish,
+                deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await db.collection('menuItems').doc(previousDish.dish).delete();
+        }
+
+        return true;
     } catch (error) {
         console.error('Firestoreへの保存に失敗しました:', error);
-        alert('Firestoreへの保存に失敗しました（ローカルには保存されています）: ' + error.message);
+        alert('保存できませんでした: ' + error.message);
+        return false;
     }
 }
 
 // 料理削除
-function deleteDish(category, dish) {
+async function deleteDish(category, dish) {
     if (!confirm(`「${dish.dish}」を削除しますか？`)) {
         return;
     }
-    
-    // customDishesから削除
-    if (customDishes[category]) {
-        customDishes[category] = customDishes[category].filter(d => d.dish !== dish.dish);
-    }
-    
-    // nutritionDataから削除（カスタム料理のみ）
-    // CSVから読み込まれた料理を消さないように、カスタム料理の有無でチェックを強化
-    nutritionData = nutritionData.filter(d => {
-        const isCustom = customDishes[category].some(cd => cd.dish === d.dish);
-        return !(d.dish === dish.dish && d.category === category && isCustom);
-    });
-    
-    // 選択されていた場合は選択解除
-    selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
-    
-    // 販売中止設定から削除
-    if (discontinuedDishes[category]) {
-        discontinuedDishes[category] = discontinuedDishes[category].filter(d => d !== dish.dish);
-    }
-    
-    // Firestoreから削除
-    deleteFromFirestore(dish);
-    
+
+    if (!await deleteFromFirestore(dish)) return;
+    nutritionData = nutritionData.filter(item => item.category !== category || item.dish !== dish.dish);
+    customDishes[category] = (customDishes[category] || []).filter(item => item.dish !== dish.dish);
+    selectedDishes[category] = (selectedDishes[category] || []).filter(name => name !== dish.dish);
+    discontinuedDishes[category] = (discontinuedDishes[category] || []).filter(name => name !== dish.dish);
+    delete dishQuantities[`${category}_${dish.dish}`];
+    delete largePortionDishes[dish.dish];
+    delete largePortionDishes[dish.dish + '_rice'];
     saveToLocalStorage();
-    
-    // UI更新（ページリロードで反映）
     location.reload();
 }
 
 async function deleteFromFirestore(dish) {
+    if (!db) return false;
+
     try {
-        // ドキュメントIDを生成（料理名）
-        const docId = `${dish.dish}`;
-        
-        await db.collection('menuItems').doc(docId).delete();
-        
-        console.log('Dish deleted from Firestore:', dish);
+        const deletionKey = getDeletedDishKey(dish.category, dish.dish);
+        await db.collection('deletedMenuItems').doc(deletionKey).set({
+            category: dish.category,
+            dishName: dish.dish,
+            deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await db.collection('menuItems').doc(dish.dish).delete();
+        return true;
     } catch (error) {
         console.error('Firestoreからの削除に失敗しました:', error);
         alert('Firestoreからの削除に失敗しました: ' + error.message);
+        return false;
     }
 }
 
@@ -1288,14 +1382,56 @@ function toggleDiscontinued(category, dish) {
         // 選択されている場合は選択解除
         selectedDishes[category] = selectedDishes[category].filter(d => d !== dish.dish);
     }
+
+    const categoryRow = Array.from(document.querySelectorAll('.category-row'))
+        .find(row => row.dataset.category === category);
+    const dishButton = categoryRow && Array.from(categoryRow.querySelectorAll('.dish-button'))
+        .find(button => button.dataset.dishName === dish.dish);
+    const nowDiscontinued = !isDiscontinued;
+
+    if (dishButton) {
+        dishButton.classList.toggle('discontinued', nowDiscontinued);
+        dishButton.classList.toggle('selected', !nowDiscontinued && selectedDishes[category].includes(dish.dish));
+
+        const statusButton = dishButton.querySelector('.discontinue-button');
+        if (statusButton) statusButton.classList.toggle('active', nowDiscontinued);
+
+        const largePortionCheckbox = dishButton.querySelector('.large-portion-checkbox');
+        if (largePortionCheckbox) {
+            largePortionCheckbox.disabled = nowDiscontinued;
+            if (nowDiscontinued && largePortionCheckbox.checked) {
+                largePortionCheckbox.checked = false;
+                largePortionCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        if (nowDiscontinued) {
+            const quantityKey = `${category}_${dish.dish}`;
+            delete dishQuantities[quantityKey];
+            if (dish.dish === 'ライス(120g)とサラダ') {
+                largePortionDishes[dish.dish + '_rice'] = false;
+            } else {
+                delete largePortionDishes[dish.dish];
+            }
+
+            const quantityBadge = dishButton.querySelector('.quantity-badge');
+            const quantityControls = dishButton.querySelector('.quantity-controls');
+            const selectedIndicator = dishButton.querySelector('.selected-indicator');
+            if (quantityBadge) quantityBadge.style.display = 'none';
+            if (quantityControls) quantityControls.style.display = 'none';
+            if (selectedIndicator) selectedIndicator.style.display = 'none';
+        }
+    }
     
     saveToLocalStorage();
-    // 状態の視覚的な即時フィードバックのため、リロードではなくUI更新
-    // location.reload(); // ロードはGoogle Sheetsの反映を待ってから行うのが望ましい
+    updateNutrition();
+    updateCategoryFlow();
 }
 
 // Firestoreの販売状態を更新
 async function updateDishStatusOnFirestore(dish, isDiscontinued) {
+    if (!db) return;
+
     try {
         const docId = `${dish.dish}`;
         const status = isDiscontinued ? '販売中止' : '販売中';
@@ -1796,13 +1932,7 @@ function updateCategoryFlow() {
                     imgWrapper.setAttribute('data-category', category);
                     
                     const img = document.createElement('img');
-                    if (dishData.image && dishData.image.startsWith('data:image')) {
-                        img.src = dishData.image;
-                    } else if (dishData.image) {
-                        img.src = dishData.image;
-                    } else {
-                        img.src = `images/${sanitizeFilename(dishData.dish)}.webp`;
-                    }
+                    img.src = getDishImageSource(dishData);
                     img.alt = dishData.dish;
                     img.className = 'category-flow-image';
                     img.onerror = function() {
@@ -1900,13 +2030,7 @@ function updateSelectedDishesImages() {
         const img = document.createElement('img');
         img.className = 'selected-dish-image';
         
-        if (dish.image && dish.image.startsWith('data:image')) {
-            img.src = dish.image;
-        } else if (dish.image) {
-            img.src = dish.image;
-        } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
-        }
+        img.src = getDishImageSource(dish);
         
         img.alt = dish.dish;
         img.onerror = function() {
@@ -2008,13 +2132,7 @@ function updateSelectedDishesList() {
         const img = document.createElement('img');
         img.className = 'selected-dish-item-image';
         
-        if (dish.image && dish.image.startsWith('data:image')) {
-            img.src = dish.image;
-        } else if (dish.image) {
-            img.src = dish.image;
-        } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
-        }
+        img.src = getDishImageSource(dish);
         
         img.alt = dish.dish;
         img.onerror = function() {
@@ -2576,65 +2694,93 @@ function setupFixedPfcBarVisibility() {
 
 // ==================== ページロード ====================
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializeAdminApp() {
+    if (adminAppInitialized) return;
+    adminAppInitialized = true;
+
     console.log('Page load started');
-    
-    // ハンバーガーメニューの設定
     setupHamburgerMenu();
-    
-    // 画像カルーセルは削除（単一画像に変更）
-    
-    // Firestoreから読み込み
     await loadFromFirestore();
-    
     loadFromLocalStorage();
     checkForCacheClean();
     init();
     restoreUISelection();
     updateNutrition();
-    
-    // メニュー項目を更新
+
     if (window.updateMenuItems) {
         window.updateMenuItems();
     }
-    
-    // 固定PFCバランスの表示制御を設定
+
     setupFixedPfcBarVisibility();
-    
-    // プレースホルダー画像をプリロード
+
     const preloadImage = new Image();
-    preloadImage.src = 'images/unselected-dish.webp';
-    
-    // フロー図を初期化（nutritionDataが読み込まれた後）
-    // 画像のプリロードを待ってから初期化
-    preloadImage.onload = () => {
+    const finishInitialization = () => {
         updateCategoryFlow();
-        
-        // fixed-pfc-barがhiddenになっていないか確認
         const fixedPfcBar = document.getElementById('fixedPfcBar');
-        if (fixedPfcBar) {
-            fixedPfcBar.classList.remove('hidden');
-        }
+        if (fixedPfcBar) fixedPfcBar.classList.remove('hidden');
     };
-    
-    // 画像の読み込みに失敗した場合や、既に読み込まれている場合のフォールバック
+    preloadImage.onload = finishInitialization;
     preloadImage.onerror = () => {
         console.warn('Placeholder image preload failed, initializing anyway');
-        updateCategoryFlow();
-        
-        const fixedPfcBar = document.getElementById('fixedPfcBar');
-        if (fixedPfcBar) {
-            fixedPfcBar.classList.remove('hidden');
-        }
+        finishInitialization();
     };
-    
-    // 既に読み込まれている場合（completeプロパティで確認）
-    if (preloadImage.complete) {
-        updateCategoryFlow();
-        
-        const fixedPfcBar = document.getElementById('fixedPfcBar');
-        if (fixedPfcBar) {
-            fixedPfcBar.classList.remove('hidden');
-        }
+    preloadImage.src = 'images/unselected-dish.webp';
+    if (preloadImage.complete) finishInitialization();
+}
+
+function initializeAdminAccess() {
+    const signInButton = document.getElementById('adminSignInButton');
+    const signOutButton = document.getElementById('adminSignOutButton');
+    const authMessage = document.getElementById('adminAuthMessage');
+    let rejectedAccount = false;
+
+    if (!adminAuth) {
+        authMessage.textContent = 'Firebase設定がないため管理者認証を開始できません。設定後に再読み込みしてください。';
+        signInButton.disabled = true;
+        return;
     }
-});
+
+    signInButton.addEventListener('click', async () => {
+        rejectedAccount = false;
+        authMessage.textContent = '';
+        try {
+            await adminAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        } catch (error) {
+            console.error('Firebase Auth sign-in failed:', error);
+            if (error.code === 'auth/operation-not-allowed') {
+                authMessage.textContent = 'Firebase ConsoleのAuthentication > Sign-in methodでGoogleを有効にし、保存してください。プロジェクトIDが menu-calorie-calculator-6934f であることも確認してください。';
+            } else if (error.code === 'auth/configuration-not-found') {
+                authMessage.textContent = 'Firebase Authenticationの初期設定が未完了です。Firebase ConsoleでAuthenticationを開始してください。';
+            } else if (error.code === 'auth/unauthorized-domain') {
+                authMessage.textContent = `このサイトのドメインが未承認です (${error.code}): ${error.message}`;
+            } else {
+                authMessage.textContent = `ログインできませんでした (${error.code || 'unknown'}): ${error.message}`;
+            }
+        }
+    });
+
+    signOutButton.addEventListener('click', () => adminAuth.signOut());
+
+    adminAuth.onAuthStateChanged(async user => {
+        if (!user) {
+            document.body.classList.remove('admin-authenticated');
+            authMessage.textContent = rejectedAccount
+                ? 'このGoogleアカウントにはアクセス権限がありません。'
+                : '指定されたGoogleアカウントでログインしてください。';
+            return;
+        }
+
+        const email = (user.email || '').toLowerCase();
+        if (!user.emailVerified || !ADMIN_EMAILS.has(email)) {
+            rejectedAccount = true;
+            await adminAuth.signOut();
+            return;
+        }
+
+        document.body.classList.add('admin-authenticated');
+        authMessage.textContent = '';
+        await initializeAdminApp();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initializeAdminAccess);

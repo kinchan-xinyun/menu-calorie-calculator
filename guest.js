@@ -16,12 +16,16 @@ const BACKUP_TIMESTAMP_KEY = 'nutritionBackupTime';
 const STORAGE_KEY_DISCONTINUED = 'discontinuedDishes';
 const STORAGE_KEY_LARGE_PORTION = 'largePortionDishes';
 
-// Firebase Configuration は firebase-config.js から読み込まれます
-// firebaseConfig は外部ファイルで定義されています
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// Firebase Configuration は任意の firebase-config.js から読み込まれます
+let db = null;
+if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+    } catch (error) {
+        console.warn('Firebaseを初期化できないため、CSVを使用します:', error);
+    }
+}
 
 // カテゴリ名のマッピング（日本語 → 英語）
 const categoryNameMap = {
@@ -32,6 +36,7 @@ const categoryNameMap = {
     'その他': { en: 'EXTRAS', ja: 'その他' },
     'SOUP': { en: 'SOUP', ja: 'スープ' },
     'DRINK': { en: 'DRINK', ja: 'ドリンク' },
+    'ベーグル': { en: 'BAGEL', ja: 'ベーグル' },
     // 旧カテゴリ名（互換性のため）
     'ごはん': { en: 'RICE', ja: 'ごはん' },
     'サラダ': { en: 'SALAD', ja: 'サラダ' },
@@ -42,7 +47,7 @@ const categoryNameMap = {
 };
 
 // カテゴリーの順序（メイン画面とナビゲーションの順序）
-const categoryOrder = ['ベース', 'ドレッシング', '副菜', '主菜', 'SOUP', 'DRINK', 'その他'];
+const categoryOrder = ['ベース', 'ドレッシング', '副菜', '主菜', 'SOUP', 'DRINK', 'その他', 'ベーグル'];
 
 // フロー図の順序（元の順序を維持）
 const categoryFlowOrder = ['ベース', '副菜', '主菜', 'SOUP', 'DRINK'];
@@ -80,12 +85,8 @@ function parseCSVLine(line) {
     return result;
 }
 
-function sanitizeFilename(filename) {
-    return filename
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '_')
-        .replace(/-+/g, '_');
+function getDishImageSource(dish) {
+    return dish.image || 'images/unselected-dish.webp';
 }
 
 async function loadCSV() {
@@ -135,6 +136,7 @@ function parseCSV(csvText) {
             const largeGrams = values[10] ? values[10].trim() : '';
             
             const imagePath = values[11] ? values[11].trim() : '';
+            const salt = values[14] ? parseFloat(values[14]) : 0;
             const displayOrder = values[13] ? parseInt(values[13]) : 999;
             
             // カテゴリー名を変換（マッピングがある場合）
@@ -156,32 +158,51 @@ function parseCSV(csvText) {
                 largeCalories: largeCalories,
                 largeGrams: largeGrams,
                 image: imagePath,
+                salt: salt,
                 displayOrder: displayOrder
             });
         }
     }
 }
 
+function getDeletedDishKey(category, dish) {
+    return encodeURIComponent(`${category}::${dish}`);
+}
+
 // ==================== Firestore から読み込み ====================
 async function loadFromFirestore() {
+    nutritionData = [];
+    await loadCSV();
+
+    if (!db) {
+        return;
+    }
+
     try {
         console.log('Loading data from Firestore...');
-        
-        const snapshot = await db.collection('menuItems').get();
-        
-        if (!snapshot.empty) {
-            nutritionData = [];
-            discontinuedDishes = {}; 
-            
-            snapshot.forEach((doc) => {
+        const [snapshot, deletedSnapshot] = await Promise.all([
+            db.collection('menuItems').get(),
+            db.collection('deletedMenuItems').get()
+        ]);
+        const deletedKeys = new Set();
+        deletedSnapshot.forEach(doc => {
+            const data = doc.data();
+            deletedKeys.add(getDeletedDishKey(data.category, data.dishName || data.dish));
+        });
+        nutritionData = nutritionData.filter(item => !deletedKeys.has(getDeletedDishKey(item.category, item.dish)));
+        discontinuedDishes = {};
+
+        snapshot.forEach((doc) => {
                 const data = doc.data();
                 const protein = data.protein || 0;
                 const fat = data.fat || 0;
                 const carbs = data.carbohydrates || data.carbs || 0;
                 const calories = data.totalCalories || data.calories || 0;
-                
                 const dishName = data.dishName || data.dish;
-                
+                const dishKey = getDeletedDishKey(data.category, dishName);
+                if (deletedKeys.has(dishKey) || data.status === '削除') return;
+                nutritionData = nutritionData.filter(item => item.category !== data.category || item.dish !== dishName);
+
                 // グラム数情報のデフォルト値を設定
                 let largeGrams = data.largeGrams || '';
                 if (!largeGrams) {
@@ -191,7 +212,6 @@ async function loadFromFirestore() {
                         largeGrams = '+40g';
                     }
                 }
-                
                 nutritionData.push({
                     id: doc.id,
                     category: data.category,
@@ -207,6 +227,7 @@ async function loadFromFirestore() {
                     largeCalories: data.largeTotalCalories || data.largeCalories || 0,
                     largeGrams: largeGrams,
                     image: data.imageUrl || data.image || '',  // Firestoreのフィールド名に対応
+                    salt: data.salt || 0,
                     status: data.status || '販売中',
                     displayOrder: data.displayOrder || 999
                 });
@@ -221,16 +242,11 @@ async function loadFromFirestore() {
                         discontinuedDishes[data.category].push(dishName);
                     }
                 }
-            });
-            
-            console.log('Data loaded from Firestore:', nutritionData.length, 'items');
-        } else {
-            console.warn('No data from Firestore, using CSV fallback');
-            await loadCSV();
-        }
+        });
+
+        console.log('Menu data loaded:', nutritionData.length, 'items');
     } catch (error) {
         console.error('Firestoreからの読み込みに失敗。CSVから読み込みます:', error);
-        await loadCSV();
     }
 }
 
@@ -404,7 +420,6 @@ function init() {
         if (dishButtons.length > 0) {
             setupDishIndicator(dishesRow, dishButtons, category);
         }
-        // 横にスクロールして他の選択肢を見られることを知らせるヒント
         if (dishButtons.length > 1) {
             setupSwipeHint(dishesRow, categoryRow, category);
         }
@@ -581,13 +596,7 @@ function createDishButton(dish, category, dishesRow) {
     const img = document.createElement('img');
     img.className = 'dish-button-img';
     
-    if (dish.image && dish.image.startsWith('data:image')) {
-        img.src = dish.image; // Base64画像をそのまま使用
-    } else if (dish.image) {
-        img.src = dish.image; // パスを使用
-    } else {
-        img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
-    }
+    img.src = getDishImageSource(dish);
     
     img.alt = dish.dish;
     img.onerror = function() {
@@ -1192,6 +1201,8 @@ function addNewDish() {
 }
 
 async function saveToFirestore(dish) {
+    if (!db) return;
+
     try {
         // ドキュメントIDを生成（料理名）
         const docId = `${dish.dish}`;
@@ -1256,6 +1267,8 @@ function deleteDish(category, dish) {
 }
 
 async function deleteFromFirestore(dish) {
+    if (!db) return;
+
     try {
         // ドキュメントIDを生成（料理名）
         const docId = `${dish.dish}`;
@@ -1296,6 +1309,8 @@ function toggleDiscontinued(category, dish) {
 
 // Firestoreの販売状態を更新
 async function updateDishStatusOnFirestore(dish, isDiscontinued) {
+    if (!db) return;
+
     try {
         const docId = `${dish.dish}`;
         const status = isDiscontinued ? '販売中止' : '販売中';
@@ -1796,13 +1811,7 @@ function updateCategoryFlow() {
                     imgWrapper.setAttribute('data-category', category);
                     
                     const img = document.createElement('img');
-                    if (dishData.image && dishData.image.startsWith('data:image')) {
-                        img.src = dishData.image;
-                    } else if (dishData.image) {
-                        img.src = dishData.image;
-                    } else {
-                        img.src = `images/${sanitizeFilename(dishData.dish)}.webp`;
-                    }
+                    img.src = getDishImageSource(dishData);
                     img.alt = dishData.dish;
                     img.className = 'category-flow-image';
                     img.onerror = function() {
@@ -1900,13 +1909,7 @@ function updateSelectedDishesImages() {
         const img = document.createElement('img');
         img.className = 'selected-dish-image';
         
-        if (dish.image && dish.image.startsWith('data:image')) {
-            img.src = dish.image;
-        } else if (dish.image) {
-            img.src = dish.image;
-        } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
-        }
+        img.src = getDishImageSource(dish);
         
         img.alt = dish.dish;
         img.onerror = function() {
@@ -2008,13 +2011,7 @@ function updateSelectedDishesList() {
         const img = document.createElement('img');
         img.className = 'selected-dish-item-image';
         
-        if (dish.image && dish.image.startsWith('data:image')) {
-            img.src = dish.image;
-        } else if (dish.image) {
-            img.src = dish.image;
-        } else {
-            img.src = `images/${sanitizeFilename(dish.dish)}.webp`;
-        }
+        img.src = getDishImageSource(dish);
         
         img.alt = dish.dish;
         img.onerror = function() {

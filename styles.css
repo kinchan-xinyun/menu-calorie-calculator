@@ -161,19 +161,95 @@ body {
 /* ヘッダー */
 .header {
     background: #F7DC6E;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
     position: sticky;
     top: 0;
     z-index: 100;
     height: 80px;
-    padding-top:10px;
+    padding: 8px 12px;
 }
 
 .header-logo {
-    width: 100%;
-    max-width: 200px;
-    height: auto;
+    width: auto;
+    max-width: min(200px, 55%);
+    max-height: 64px;
     object-fit: contain;
+}
+
+.admin-auth-gate {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #e8f2e8;
+    box-sizing: border-box;
+}
+
+body.admin-page:not(.admin-authenticated) > :not(.admin-auth-gate) {
+    display: none !important;
+}
+
+body.admin-page.admin-authenticated .admin-auth-gate {
+    display: none;
+}
+
+.admin-auth-panel {
+    width: 100%;
+    max-width: 380px;
+    padding: 28px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.admin-auth-panel h1 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    color: var(--text-dark);
+}
+
+.admin-auth-panel p {
+    margin: 0 0 20px;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.admin-auth-button,
+.admin-sign-out {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    background: #fff;
+    color: var(--text-dark);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-auth-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.admin-auth-settings {
+    display: block;
+    margin-top: 16px;
+    color: var(--dark-green);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.admin-sign-out {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 /* カテゴリーナビゲーション */
@@ -259,30 +335,114 @@ body {
 /* Description */
 .description {
     text-align: center;
-    background: whitesmoke;
+    padding: 18px 12px;
+    background: #E8F2E8;
 }
 
 .description p {
     font-family: "Zen Kaku Gothic New", sans-serif;
     margin: 8px 0;
     line-height: 1.6;
-    color: var(--text-dark);
+    color: #111111;
 }
 
 .description p:first-child {
     font-size: 24px;
     font-weight: 900;
-    color: var(--primary-green);
-    text-shadow: 0 1px 1px var(--primary-green);
+    color: #111111;
+    text-shadow: none;
     margin-bottom: 12px;
 }
 
 .description p:nth-child(2), .description p:nth-child(3) , .description p:nth-child(4) {
     font-size: 16px;
     font-weight: 700;
-    color: var(--text-dark);
+    color: #111111;
 }
 
+.instagram-placement {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: #FFFFFF;
+}
+
+.instagram-handle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #111111;
+    font-family: "Montserrat", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.instagram-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.instagram-follow-message {
+    color: #111111;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.delivery-banner {
+    padding: 14px 12px 18px;
+    background: #FFF1D8;
+    text-align: center;
+}
+
+.delivery-banner p {
+    margin-bottom: 10px;
+    color: #111111;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.delivery-services {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: start;
+    gap: 8px;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.delivery-service {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.delivery-service-logo {
+    display: block;
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.menu-delivery-logo {
+    transform: scale(1.2);
+}
+
+.delivery-service-name {
+    color: #111111;
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
 
 /* 栄養情報サマリー（固定） */
 .result-container {
@@ -1207,7 +1367,7 @@ body {
 }
 
 .dish-button.discontinued::after {
-    content: '販売中止';
+    content: '販売停止';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -1265,11 +1425,22 @@ body {
 
 .delete-button {
     background-color: rgba(200, 200, 200, 0.9);
+    width: 42px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .delete-button:active {
     background-color: #ff6b6b;
     color: white;
+}
+
+.edit-button {
+    width: 36px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .add-button {
@@ -1287,8 +1458,10 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    width: 90%;
-    margin: 8px auto;
+    width: 140px;
+    min-height: 220px;
+    flex: 0 0 140px;
+    margin: 0;
     touch-action: manipulation;
     box-shadow: var(--shadow);
 }
@@ -2070,6 +2243,29 @@ body {
 
 /* スマホ画面でのカテゴリーラベル調整 */
 @media (max-width: 480px) {
+    .instagram-handle {
+        gap: 4px;
+        font-size: 12px;
+    }
+
+    .instagram-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .delivery-services {
+        gap: 4px;
+    }
+
+    .delivery-service-logo {
+        width: 34px;
+        height: 34px;
+    }
+
+    .delivery-service-name {
+        font-size: 9px;
+    }
+
     .category-label-en {
         font-size: 32px;
         letter-spacing: 0.3px;

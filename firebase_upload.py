@@ -59,6 +59,7 @@ with open(csv_file_path, mode='r', encoding='utf-8') as file:
                 'largeTotalCalories': float(row['大盛り総カロリー']),
                 'largeGrams': row['大盛りグラム数'],
                 'imageUrl': row['画像パス'],  # JavaScriptと統一
+                'salt': float(row.get('塩分') or 0),
                 'status': row['販売状態'],
                 'displayOrder': int(row['表示順'])
             }
